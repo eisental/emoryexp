@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/emoryexp/static/css/main.ea1455b2.chunk.css",
+    "main.js": "/emoryexp/static/js/main.daedcbef.chunk.js",
+    "main.js.map": "/emoryexp/static/js/main.daedcbef.chunk.js.map",
+    "runtime-main.js": "/emoryexp/static/js/runtime-main.9239b322.js",
+    "runtime-main.js.map": "/emoryexp/static/js/runtime-main.9239b322.js.map",
+    "static/js/2.91a1e90c.chunk.js": "/emoryexp/static/js/2.91a1e90c.chunk.js",
+    "static/js/2.91a1e90c.chunk.js.map": "/emoryexp/static/js/2.91a1e90c.chunk.js.map",
+    "static/js/3.f4529f4f.chunk.js": "/emoryexp/static/js/3.f4529f4f.chunk.js",
+    "static/js/3.f4529f4f.chunk.js.map": "/emoryexp/static/js/3.f4529f4f.chunk.js.map",
+    "index.html": "/emoryexp/index.html",
+    "static/css/main.ea1455b2.chunk.css.map": "/emoryexp/static/css/main.ea1455b2.chunk.css.map",
+    "static/js/2.91a1e90c.chunk.js.LICENSE.txt": "/emoryexp/static/js/2.91a1e90c.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.9239b322.js",
+    "static/js/2.91a1e90c.chunk.js",
+    "static/css/main.ea1455b2.chunk.css",
+    "static/js/main.daedcbef.chunk.js"
+  ]
+}
