@@ -1,6 +1,6 @@
 {
-  "short_name": "ניסוי",
-  "name": "ניסוי",
+  "short_name": "experiment",
+  "name": "experiment",
   "icons": [
     {
       "src": "favicon.ico",
