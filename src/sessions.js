@@ -3,7 +3,7 @@ import gs from './spreadsheet_io.js';
 const SheetNames = {
     SESSIONS: "Sessions",
     SUBJECTS: "Subjects",
-}
+};
 
 export const SessionEvent = {
     SESSION_START: "SESSION_START",
@@ -30,7 +30,6 @@ export const writeSessionEvent = (conn, session, event, on_error) => {
     let request_data = Object.assign({event: event,
                                       time: new Date().toString()},
                                      session);
-    console.log(request_data)
     gs.write(conn, SheetNames.SESSIONS, request_data)
 	.catch(on_error);
     
@@ -59,10 +58,10 @@ export const read_subject_data = (conn, subject_id) => {
         if (row[0] === subject_id) {
             const subject_data = {
 		id: row[0],
-            }
+            };
             return subject_data;
         }
 	    }
 	    return null;
 	});
-}
+};

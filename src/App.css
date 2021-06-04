@@ -1,0 +1,21 @@
+.error {
+    color: red;
+    margin: 1.5rem;
+    text-align: center
+}
+
+.infotext {
+    margin-top: 4rem;
+}
+
+.breathing-top {
+    margin-top: 4rem;
+}
+
+.tiny-breathing-top {
+    margin-top: 1rem;
+}
+
+#id_input {
+    width: 4em;
+}

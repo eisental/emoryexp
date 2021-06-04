@@ -1,4 +1,7 @@
 import React from 'react';
+import { text_english } from './text.js';
+
+const texts = text_english;
 
 export const openFullscreen = () => {
   const elem = document.documentElement;
@@ -14,7 +17,7 @@ export const openFullscreen = () => {
 };
 
 export const LoadingScreen = () => {
-  return <div className="containter text-center"><p className="lead">טוען...</p></div>;
+    return <div className="containter text-center"><p className="lead">{texts.loading}</p></div>;
 };
 
 export const ErrorScreen = ({error}) => {
@@ -22,7 +25,7 @@ export const ErrorScreen = ({error}) => {
     <div className="container">
       <div className="row">
         <div className="col-sm">
-          <p>התרחשה שגיאה:</p>
+          <p>{texts.error_occurred}:</p>
           <p className="lead center">{error}</p>
         </div>
       </div>
@@ -30,7 +33,7 @@ export const ErrorScreen = ({error}) => {
   );
 };
 
-export const InfoScreen = ({info, next, continue_disabled}) => {
+export const InfoScreen = ({info, next, continue_disabled, continue_label}) => {
   return (
     <div className="container">
       <div className="row">
@@ -42,7 +45,7 @@ export const InfoScreen = ({info, next, continue_disabled}) => {
         <div className="col"></div>
         <div className="col text-center">
           <br/>
-          <ContinueButton next={next} disabled={continue_disabled} />
+            <ContinueButton next={next} disabled={continue_disabled} label={continue_label}/>
         </div>
         <div className="col"></div>
       </div>
