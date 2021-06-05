@@ -19,3 +19,7 @@
 #id_input {
     width: 4em;
 }
+
+.picture_samples_imgs img {
+    margin: 4px;
+}

@@ -72,6 +72,11 @@ export const audio_visual_pairings = {
 export const audio_ext = ".mp3";
 export const image_ext = ".png";
 
+const audio_stim_dir = "exp2021/stimuli/audio/";
+const visual_stim_dir = "exp2021/stimuli/images/";
+
+export const visual_stim_size = [162, 162];
+
 export const audio_stimulus_url = (medium,
                                    language,
                                    participant,
@@ -81,7 +86,7 @@ export const audio_stimulus_url = (medium,
                                    picture_orientation,
                                    meaning) =>
 {
-    return Medium[medium] + "_" +
+    return audio_stim_dir + Medium[medium] + "_" +
         Language[language] + "_" +
         participant + "_" +
         UnitSize[unit_size] + "_" +
@@ -96,7 +101,7 @@ export const visual_stimulus_url = (meaning,
                                     picture_variant,
                                     picture_orientation) =>
 {
-    return MeaningName[Meaning[meaning]] +
+    return visual_stim_dir + MeaningName[Meaning[meaning]] +
         picture_variant +
         PictureOrientation[picture_orientation] +
         image_ext;

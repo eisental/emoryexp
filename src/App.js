@@ -10,6 +10,12 @@ import { LoginScreen } from './login.js';
 import { SubjectDataScreen } from './subject_data.js';
 import { PictureSamplesScreen } from './picture_samples.js';
 import { Experiment } from './experiment.js';
+import { SemanticField } from './stimuli.js';
+
+/* TODO
+ * - Randomize the semantic fields list !counterbalanced! between participants!
+ * - Select the correct set of pictures for the current subject
+ */
 
 const texts = text_english;
 
@@ -52,6 +58,12 @@ class App extends React.Component {
         trials: [],
     }
 
+    mocked_user_props = {
+        ordered_semantic_fields: SemanticField,
+        picture_variant: 1,
+        picture_orientation: "RIGHT",
+    }
+    
     componentDidMount() {
 	this.data.start_time = new Date().toString();
     }
@@ -234,7 +246,11 @@ class App extends React.Component {
                                    continue_label={texts.continue_label}
                                    key={step} />;
             case this.steps.PICTURE_SAMPLES:
-                return <PictureSamplesScreen next={this.nextStep} key={step} />;
+                return <PictureSamplesScreen next={this.nextStep}
+                                             ordered_semantic_fields={this.mocked_user_props.ordered_semantic_fields}
+                                             picture_variant={this.mocked_user_props.picture_variant}
+                                             picture_orientation={this.mocked_user_props.picture_orientation}
+                                             key={step} />;
             case this.steps.EXPERIMENT_BLOCKS:
                 return <Experiment next={this.nextStep} data={this.data} key={step} />;
             case this.steps.FINISH:

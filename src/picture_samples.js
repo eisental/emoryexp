@@ -2,28 +2,39 @@ import React from 'react';
 import { ContinueButton, InfoScreen } from './ui.js';
 import { text_english } from './text.js';
 import { SemanticField, semantic_field_meanings, visual_stimulus_url,
-         PictureOrientation, MeaningName } from './stimuli.js';
+         PictureOrientation, MeaningName, visual_stim_size } from './stimuli.js';
+import ls from 'local-storage';
 
 const texts = text_english;
 
-// TODO:
-// - Randomize the semantic fields list !counterbalanced! between participants!
-// - Select the correct set of pictures for the current subject
-// - put current step in local storage
-
-export const PictureSamplesScreen = ({next}) => {
+export const PictureSamplesScreen = ({next, ordered_semantic_fields, picture_variant, picture_orientation}) => {
     const [intro, setIntro] = React.useState(true);
     const [semanticFieldId, setSemanticFieldId] = React.useState(0);
 
-    const picture_variant = 1;
-    const picture_orientation = "RIGHT";
+    const ls_prefix = "picture_samples_";
+
+    React.useEffect(() => {
+        const cont_field = ls.get(ls_prefix + "semantic_field");
+        
+        if (cont_field !== undefined && cont_field !== null) {
+            setSemanticFieldId(cont_field);
+            setIntro(ls.get(ls_prefix + "in_intro"));
+        }
+        else {
+            console.log("setting");
+            ls.set(ls_prefix + "in_intro", intro);
+            ls.set(ls_prefix + "semantic_field", semanticFieldId);
+        }
+    }, []);
     
     const nextSemanticField = () => {
         setSemanticFieldId(semanticFieldId + 1);
+        ls.set(ls_prefix + "semantic_field", semanticFieldId + 1);
     };
     
     const proceed_to_samples = () => {
         setIntro(false);
+        ls.set(ls_prefix + "in_intro", false);
     };
 
     if (intro) {
@@ -32,19 +43,21 @@ export const PictureSamplesScreen = ({next}) => {
                            next={proceed_to_samples}/>;
     }
     else {
-        const semantic_field = SemanticField[semanticFieldId];
+        const semantic_field = ordered_semantic_fields[semanticFieldId];
         const meanings = semantic_field_meanings[semantic_field]
             .map(m => MeaningName[m]);
         
         console.log(meanings);
         const imgs = meanings
               .map(m => visual_stimulus_url(m, picture_variant, picture_orientation))
-              .map(src => <img src={src} alt={src}/>);
-        
+              .map(src => <img src={src} alt={src} key={src}
+                               width={visual_stim_size[0]}
+                               height={visual_stim_size[1]}/>);
+
         return (
             <div className="container">
               <div className="row">
-                <div className="col-md-8 offset-md-2 infotext">
+                <div className="col-md-8 offset-md-2 infotext text-center picture_samples_imgs">
                   {texts.picture_samples}
                   {imgs}
                 </div>
