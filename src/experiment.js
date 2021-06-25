@@ -4,6 +4,10 @@ import { text_english } from './text.js';
 
 const texts = text_english;
 
+const TrialUI = ({is_practice, stimuli}) => {
+    
+};
+
 export class Experiment extends React.Component {
     ls_prefix = "experiment_"
 

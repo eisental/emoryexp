@@ -205,13 +205,20 @@ class App extends React.Component {
     
     save_data = () => {
         this.data.end_time = new Date().toString();
+        this.data.trials.push({}); // TEMP
         this.data.trials.forEach(t => {
             t.id = this.data.id;
             t.session_number = this.data.session_number;
             t.start_time = this.data.start_time;
             t.end_time = this.data.end_time;
             if (this.data.session_number === 1) {
-                // copy subject data to trial
+                t.gender = this.data.gender;
+		t.age = this.data.age;
+		t.musical_instrument = this.data.musical_instrument;
+                t.music_theory = this.data.music_theory;
+                t.activity = this.data.activity;
+                t.activity_specify = this.data.activity_specify;
+                t.acting = this.data.acting;
             }
         });
 

@@ -13,7 +13,51 @@ export const text_english = {
         The experiment begins with a short practice session, followed by 4 "blocks" of trials. Four additional blocks will be presented in the 2nd session of the experiment, to be conducted in about a week.
       </p>
     </React.Fragment>,
-    
+
+    subject_data: {
+        header:
+        <p>Thank you for your participation in this experiment. Please provide the following information:</p>,
+
+        musical_instrument:
+        <p>
+          Have you studied a musical instrument formally (including vocal trainig)? If you have, please specity for how many years. If you have not, choose "0".
+        </p>,
+
+        music_theory:
+        <p>
+          Have you studied music theory formally? If you have, please specify for how many years. If you have not, choose "0".
+        </p>,
+
+        musical_activity:
+        <p>
+          Are you currently involved in any musical activity (excluding passive listening) professionaly or as a serious hobby? 
+        </p>,
+
+        musical_activity_specify:
+        <p>
+          If you are, please specify
+        </p>,
+
+        acting:
+        <p>
+          Have you been involved in acting (professionally or as a serious hobby)?
+        </p>,
+
+        done:
+        <p>
+          When done, please press "proceed"
+        </p>,
+
+        validation: "Please complete all cells before pressing proceed",
+        gender: "Gender",
+        gender_male: "Male",
+        gender_female: "Female",
+        gender_other: "Other",
+        age: "Age",
+        yes: "Yes",
+        no: "No",
+    },
+
     picture_samples_intro:
     <React.Fragment>
       <p>

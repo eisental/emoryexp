@@ -23,3 +23,24 @@
 .picture_samples_imgs img {
     margin: 4px;
 }
+
+table {
+    width: 100%;
+}
+
+th {
+    padding-right: 10px;
+}
+tr td:last-child {
+    width: 1%;
+    white-space: nowrap;
+}
+
+table tr th {
+    font-weight: normal;
+}
+
+table tr td input[type=radio] {
+    margin-left: 4px;
+    margin-right: 3px;
+}
