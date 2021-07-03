@@ -53,20 +53,23 @@ export const semantic_field_meanings = {
     DISTANCE: [9, 10, 11, 12],
 };
 
+export const contrast_meanings = ["High", "Low", "Far", "Near", "Large", "Small"];
+export const serial_meanings = ["Ascending", "Descending", "Approaching", "Receding", "Growing", "Shrinking"];
+
 // Mapping between audio meaning and possible wrong answer picture meanings.
 export const audio_visual_pairings = {
-    HIGH: ["Low", "Ascending"],
-    LOW: ["High", "Descending"],
-    ASCENDING: ["Descending", "High"],
-    DESCENDING: ["Ascending", "Low"],
-    LARGE: ["Small", "Growing"],
-    SMALL: ["Large", "Shrinking"],
-    GROWING: ["Shrinking", "Large"],
-    SHRINKING: ["Growing", "Small"],
-    NEAR: ["Far", "Approaching"],
-    FAR: ["Near", "Receding"],
-    APPROACHING: ["Receding", "Near"],
-    RECEDING: ["Approaching", "Far"],
+    High: ["Low", "Ascending"],
+    Low: ["High", "Descending"],
+    Ascending: ["Descending", "High"],
+    Descending: ["Ascending", "Low"],
+    Large: ["Small", "Growing"],
+    Small: ["Large", "Shrinking"],
+    Growing: ["Shrinking", "Large"],
+    Shrinking: ["Growing", "Small"],
+    Near: ["Far", "Approaching"],
+    Far: ["Near", "Receding"],
+    Approaching: ["Receding", "Near"],
+    Receding: ["Approaching", "Far"],
 };
 
 export const audio_ext = ".mp3";
@@ -107,46 +110,65 @@ export const visual_stimulus_url = (meaning,
         image_ext;
 };
 
-export const blocks = (() => {
+export const blocks = (data) => {
     let blocks = [];
     for (let medium in Medium)
-        for (let lang in Language)
-            for (let unit in UnitSize)
+        for (let lang in Language) {
+            const participant = data[`subject_${Medium[medium]}_${Language[lang]}`];
+
+            for (let unit in UnitSize) {
                 blocks.push({
                     medium: medium,
                     language: lang,
                     unit_size: unit,
+		    participant: participant,
                 });
+            }
+        }
     return blocks;
-})();
+};
 
-export const block_stimuli = (block, participant) => {
+export const exp1_picture_orientation = (exp1_recordings, unit_size, word, meaning, picture_variant, participant) => {
+    const filtered_recs = exp1_recordings.filter(r =>
+        r[0] === unit_size && r[2] === word && r[3] === meaning + picture_variant && parseInt(r[5]) === participant);
+
+    if (filtered_recs.length === 0) 
+        return [Array(4).fill(undefined)];    
+    else
+        return filtered_recs[0][4];
+};
+
+export const block_stimuli = (block, picture_variant, exp1_recordings) => {
     const stims = [];
-    const picture_variants = randomSequence([1, 2], 48);
-    const picture_orientations = randomSequence(Object.keys(PictureOrientation), 48);
     
     let i = 0;
     for (let meaning in Meaning)
         for (let pairing of [0, 1])
             for (let word in NovelWord) {
+                const picture_orientation = exp1_picture_orientation(exp1_recordings,
+                                                                     block.unit_size,
+                                                                     word,
+                                                                     meaning,
+                                                                     picture_variant,
+                                                                     block.participant);
                 stims.push({
                     audio: audio_stimulus_url(
                         block.medium,
                         block.language,
-                        participant,
+                        block.participant,
                         block.unit_size,
                         word,
-                        picture_variants[i],
-                        picture_orientations[i],
+                        picture_variant,
+                        picture_orientation,
                         meaning,
                     ),
                     pictures: [
                         visual_stimulus_url(meaning,
-                                            picture_variants[i],
-                                            picture_orientations[i]),
+                                            picture_variant,
+                                            picture_orientation),
                         visual_stimulus_url(audio_visual_pairings[meaning][pairing], 
-                                            picture_variants[i],
-                                            picture_orientations[i]),
+                                            picture_variant,
+                                            picture_orientation),
                     ],
                 });
                 
@@ -155,4 +177,29 @@ export const block_stimuli = (block, participant) => {
     
     return shuffleArray(stims);
     
+};
+
+
+export const all_audio_urls = (exp1_recs) => {
+    const urls = [];
+
+    for (let m in Medium) {
+        for (let l in Language) {
+            for (let p = 1; p<=8; p++) {
+                for (let u in UnitSize) {
+                    for (let w in NovelWord) {
+                        for (let v = 1; v <= 2; v++) {
+                            for (let mn in Meaning) {
+                                const o = exp1_picture_orientation(exp1_recs, u, w, mn, v, p);
+                                if (o !== undefined)
+                                    urls.push(audio_stimulus_url(m, l, p, u, w, v, o, mn)); 
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return urls;
 };

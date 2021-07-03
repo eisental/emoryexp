@@ -91,7 +91,7 @@ export const SubjectDataScreen = ({next, data}) => {
         <div className="container">
           <div className="row">
             <div className="col-md-8 offset-md-2 breathing-top">
-		<p>{texts.subject_data.header}</p>
+		{texts.subject_data.header}
             </div>
           </div>
           <div className="row">

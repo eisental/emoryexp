@@ -2,15 +2,16 @@ import './App.css';
 import React from 'react';
 import ls from 'local-storage';
 import { readSessionData, writeSessionEvent, SessionEvent, does_user_sheet_exists } from './sessions.js';
-import { LoadingScreen, ContinueButton, ErrorScreen, InfoScreen } from './ui.js';
+import { LoadingScreen, ErrorScreen, InfoScreen } from './ui.js';
 import { text_english } from './text.js';
 import gs from './spreadsheet_io.js';
-import { blocks, block_stimuli } from './stimuli.js';
 import { LoginScreen } from './login.js';
 import { SubjectDataScreen } from './subject_data.js';
 import { PictureSamplesScreen } from './picture_samples.js';
 import { Experiment } from './experiment.js';
 import { SemanticField } from './stimuli.js';
+import { counterbalance, shuffleArray } from './randomize.js';
+import { blocks, all_audio_urls } from './stimuli.js';
 
 /* TODO
  * - Randomize the semantic fields list !counterbalanced! between participants!
@@ -22,9 +23,9 @@ const texts = text_english;
 const FinishScreen = ({done_saving, data_save_error}) => {
   return (
     <div className="container">
-      <div className="col-md-8 offset-md-2 finish-screen text-center">
-        <h1>{texts.finish}</h1>
-        <p>{done_saving ? texts.finish_success : texts.finish_wait }</p>
+      <div className="col-md-8 offset-md-2 finish-screen">
+        {texts.finish}
+        <p className="font-weight-bold">{done_saving ? texts.finish_success : texts.finish_wait }</p>
         <p className="alert-error">{data_save_error}</p>
       </div>
     </div>
@@ -59,8 +60,6 @@ class App extends React.Component {
     }
 
     mocked_user_props = {
-        ordered_semantic_fields: SemanticField,
-        picture_variant: 1,
         picture_orientation: "RIGHT",
     }
     
@@ -123,6 +122,12 @@ class App extends React.Component {
                 this.setState({error: texts.error_no_connection + " (" + err + ")."});
             });
     }
+
+    load_exp1_recordings = () => {
+        return gs.read(this.conn, "FirstExperimentTrials", "B2:G769")
+            .then(res => res.json())
+            .then(exp1_data => this.exp1_recordings = exp1_data.values);
+    }
     
     handle_login = () => {
         this.setState({loading: true});
@@ -140,7 +145,7 @@ class App extends React.Component {
                             else {
                                 // Not first session or continued session.
                                 const last_session = previous_sessions[previous_sessions.length-1];
-                                const last_session_number = parseInt(last_session.number);
+                                const last_session_number = parseInt(last_session.session_number);
                                 if (last_session.event !== SessionEvent.SESSION_END) {
                                     // Continue session
                                     this.continue_session(last_session_number);
@@ -156,9 +161,7 @@ class App extends React.Component {
                                         this.start_new_session(2);
                                     }
                                 }
-                            }
-                            
-                            this.setState({loading: false});
+                            }                            
                         })
                         .catch(err => {
                             this.setState({error: texts.error_no_connection + " (" + err + ")."});
@@ -168,17 +171,35 @@ class App extends React.Component {
     }
 
     start_new_session = (number) => {
-        this.data.session_number = number;
+        this.data.session = number;
+        const start_session = () => {
+	    console.log("Clearing local storage");
+            ls.clear();
+            ls.set("data", this.data);
+            
+            if (number === 2 && this.state.step === this.steps.SUBJECT_DATA) {
+                this.nextStep();
+            }
+            this.load_exp1_recordings()
+                .then(() => {
+                    ls.set("exp1_recordings", this.exp1_recordings);
+                    this.setState({loading: false});
+                });
+        };
+        
         writeSessionEvent(this.conn, this.data, SessionEvent.SESSION_START);
-        this.setState({loading: false});
-
-        ls.clear();
-        ls.set("data", this.data);
-
-        if (number === 2 && this.state.step === this.steps.SUBJECT_DATA) {
-            this.nextStep();
+        if (number === 1) {
+            this.generate_subject_settings()
+                .then(() => {
+                    this.setState({loading: false});
+                    start_session();
+                });
         }
-
+        else {
+            
+            this.load_subject_settings()
+                .then(start_session);
+        }        
     }
 
     continue_session = (number) => {
@@ -186,8 +207,17 @@ class App extends React.Component {
         if (cont_data && cont_data.id === this.data.id) {
             this.data = cont_data;
             writeSessionEvent(this.conn, this.data, SessionEvent.SESSION_CONTINUED);
-            this.setState({loading: false});
+            this.load_subject_settings()
+                .then(() => this.setState({loading: false}));
 
+            const exp1_recordings = ls.get("exp1_recordings");
+            if (exp1_recordings) {
+                this.exp1_recordings = exp1_recordings;            
+            }
+            else {
+                this.load_exp1_recordings();
+            }
+            
             const cont_step = ls.get("step");
             if (cont_step) {
                 if (cont_step === this.steps.SUBJECT_DATA && number === 2) {
@@ -202,16 +232,115 @@ class App extends React.Component {
             this.start_new_session(number);
         }
     }
+
+    generate_subject_settings = () => {
+        return gs.read(this.conn, "Subjects", "A2:I10000")
+            .then(res => res.json())
+            .then(subjects_sheet => {
+                if (!subjects_sheet.values) {
+                    // first subject
+                    this.data.picture_samples_order = 0;
+                    this.data.picture_variant = 1;
+		    this.data.left_picture = 0;
+
+                    const exp1_subjects = shuffleArray([0, 1, 2, 3, 4, 5, 6, 7]);
+                    this.data.subject_Mu_E = exp1_subjects[0];
+                    this.data.subject_Mu_H = exp1_subjects[1];
+                    this.data.subject_Sp_E = exp1_subjects[2];
+                    this.data.subject_Sp_H = exp1_subjects[3];
+                }
+                else {
+                    const prev_settings = subjects_sheet.values;
+                    const prev_group_settings = prev_settings.filter(r => r[1] === this.data.group);
+
+                    // Picture samples order
+                    const prev_picture_samples = prev_settings.map(r => r[2]);
+                    this.data.picture_samples_order = counterbalance(6, prev_picture_samples);
+
+                    // Picture variant
+                    if (prev_group_settings.length === 0) {
+                        this.data.picture_variant = 1;
+                    }
+                    else {
+                        const prev_group_variants = prev_group_settings.map(r => r[3]);
+                        let set1_count = 0;
+                        for (let v of prev_group_variants) {
+                            if (v === "1")
+                                set1_count += 1;                            
+                        }
+                        const set2_count = prev_group_variants.length - set1_count;
+                        this.data.picture_variant = set1_count > set2_count ? 2 : 1;
+                    }
+
+                    // Picture order in a single trial
+		    const prev_left_picture = prev_settings.map(r => r[4]);
+		    this.data.left_picture = counterbalance(2, prev_left_picture);
+
+                    // Exp1 participant per block
+                    if (prev_group_settings.length === 0) {
+                        const exp1_subjects = shuffleArray([0, 1, 2, 3, 4, 5, 6, 7]);
+                        this.data.subject_Mu_E = exp1_subjects[0];
+                        this.data.subject_Mu_H = exp1_subjects[1];
+                        this.data.subject_Sp_E = exp1_subjects[2];
+                        this.data.subject_Sp_H = exp1_subjects[3];
+                    }
+                    else {
+                        const prev_subject_Mu_E = prev_group_settings.map(r => r[5]);
+                        const prev_subject_Mu_H = prev_group_settings.map(r => r[6]);
+                        const prev_subject_Sp_E = prev_group_settings.map(r => r[7]);
+                        const prev_subject_Sp_H = prev_group_settings.map(r => r[8]);
+                        
+                        this.data.subject_Mu_E = counterbalance(8, prev_subject_Mu_E);
+                        this.data.subject_Mu_H = counterbalance(8, prev_subject_Mu_H);
+                        this.data.subject_Sp_E = counterbalance(8, prev_subject_Sp_E);
+                        this.data.subject_Sp_H = counterbalance(8, prev_subject_Sp_H);
+                    }
+                }
+
+                this.data.blocks = JSON.stringify(blocks(this.data));
+                
+                return gs.write(this.conn, "Subjects", this.data); 
+            });
+    };
+
+    load_subject_settings = () => {
+        return gs.read(this.conn, "Subjects", "A2:J10000")
+            .then(res => res.json())
+            .then(subjects_sheet => {
+                if (!subjects_sheet.values) {
+                    this.setState({error: texts.error_no_subject_settings + this.data.id});                    
+                }
+                else {
+                    // find last settings row for participant id
+                    const rows = subjects_sheet.values.filter(row => row[0] === this.data.id);
+                    if (rows.length === 0) {
+                        this.setState({error: texts.error_no_subject_settings + this.data.id});
+                    }
+                    else {
+                        const settings_row = rows[rows.length-1];
+                        this.data.group = settings_row[1];
+                        this.data.picture_samples_order = settings_row[2];
+                        this.data.picture_variant = settings_row[3];
+                        this.data.left_picture = settings_row[4];
+                        this.data.subject_Mu_E = settings_row[5];
+                        this.data.subject_Mu_H = settings_row[6];
+                        this.data.subject_Sp_E = settings_row[7];
+                        this.data.subject_Sp_H = settings_row[8];
+                        this.data.blocks = JSON.parse(settings_row[9]);
+                    }                   
+                }
+            });
+    };
     
     save_data = () => {
         this.data.end_time = new Date().toString();
         this.data.trials.push({}); // TEMP
         this.data.trials.forEach(t => {
             t.id = this.data.id;
-            t.session_number = this.data.session_number;
+            t.session = this.data.session;
             t.start_time = this.data.start_time;
             t.end_time = this.data.end_time;
-            if (this.data.session_number === 1) {
+            if (this.data.session === 1) {
                 t.gender = this.data.gender;
 		t.age = this.data.age;
 		t.musical_instrument = this.data.musical_instrument;
@@ -254,12 +383,15 @@ class App extends React.Component {
                                    key={step} />;
             case this.steps.PICTURE_SAMPLES:
                 return <PictureSamplesScreen next={this.nextStep}
-                                             ordered_semantic_fields={this.mocked_user_props.ordered_semantic_fields}
-                                             picture_variant={this.mocked_user_props.picture_variant}
+                                             semantic_fields_permutation={this.data.picture_samples_order}
+                                             picture_variant={this.data.picture_variant}
                                              picture_orientation={this.mocked_user_props.picture_orientation}
                                              key={step} />;
             case this.steps.EXPERIMENT_BLOCKS:
-                return <Experiment next={this.nextStep} data={this.data} key={step} />;
+                return <Experiment next={this.nextStep}
+                                   data={this.data}
+                                   exp1_recordings={this.exp1_recordings}
+                                   key={step} />;
             case this.steps.FINISH:
                 return <FinishScreen done_saving={this.state.done_saving} key={step} />;
             default:
