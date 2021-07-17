@@ -17,7 +17,7 @@ export const parseSessions = (data) => {
     data.values.forEach(session_event => {
 	let session = {
 	    id: session_event[0],
-	    number: session_event[1],
+	    session: session_event[1],
 	    event: session_event[2],
 	    time: session_event[3],
 	};

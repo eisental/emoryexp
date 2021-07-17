@@ -132,7 +132,7 @@ export const text_english = {
       </p>
     </React.Fragment>,
     
-    trial_insturction2:
+    trial_instruction2:
     <React.Fragment>
       <p>
         Please click the picture that better matches the meaning that the voice seems to express. You may listen to the voice again, by clicking its icon.
@@ -153,7 +153,7 @@ export const text_english = {
       </p>
     </React.Fragment>,
 
-    break:
+    pause:
     <p>You may now take a short break. When you want to proceed, press the "proceed" box below.</p>,
    
     finish:

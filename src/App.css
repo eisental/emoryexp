@@ -16,11 +16,11 @@
     margin-top: 1rem;
 }
 
-#id_input {
-    width: 4em;
+.picture_imgs img {
+    margin: 4px;
 }
 
-.picture_samples_imgs img {
+.trial_imgs button {
     margin: 4px;
 }
 
@@ -28,9 +28,13 @@ table {
     width: 100%;
 }
 
-th {
+th p {
     padding-right: 10px;
+    vertical-align: middle;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
 }
+
 tr td:last-child {
     width: 1%;
     white-space: nowrap;
@@ -43,4 +47,8 @@ table tr th {
 table tr td input[type=radio] {
     margin-left: 4px;
     margin-right: 3px;
+}
+
+table tr td input[type=text] {
+    width: 100%;
 }

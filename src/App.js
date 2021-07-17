@@ -56,7 +56,7 @@ class App extends React.Component {
     }
 
     data = {
-        trials: [],
+	trials: []
     }
 
     mocked_user_props = {
@@ -145,7 +145,8 @@ class App extends React.Component {
                             else {
                                 // Not first session or continued session.
                                 const last_session = previous_sessions[previous_sessions.length-1];
-                                const last_session_number = parseInt(last_session.session_number);
+                                const last_session_number = parseInt(last_session.session);
+
                                 if (last_session.event !== SessionEvent.SESSION_END) {
                                     // Continue session
                                     this.continue_session(last_session_number);
@@ -171,7 +172,9 @@ class App extends React.Component {
     }
 
     start_new_session = (number) => {
+	console.log("Start new session:", number);
         this.data.session = number;
+
         const start_session = () => {
 	    console.log("Clearing local storage");
             ls.clear();
@@ -203,6 +206,7 @@ class App extends React.Component {
     }
 
     continue_session = (number) => {
+	console.log("Continue session:", number);
         const cont_data = ls.get("data");
         if (cont_data && cont_data.id === this.data.id) {
             this.data = cont_data;
@@ -297,9 +301,11 @@ class App extends React.Component {
                     }
                 }
 
-                this.data.blocks = JSON.stringify(blocks(this.data));
+                this.data.blocks = blocks(this.data);
                 
-                return gs.write(this.conn, "Subjects", this.data); 
+                const subject_row = Object.assign({}, this.data);
+		subject_row.blocks = JSON.stringify(subject_row.blocks);
+                return gs.write(this.conn, "Subjects", subject_row); 
             });
     };
 
@@ -333,8 +339,8 @@ class App extends React.Component {
     };
     
     save_data = () => {
+	
         this.data.end_time = new Date().toString();
-        this.data.trials.push({}); // TEMP
         this.data.trials.forEach(t => {
             t.id = this.data.id;
             t.session = this.data.session;
@@ -350,7 +356,8 @@ class App extends React.Component {
                 t.acting = this.data.acting;
             }
         });
-
+	console.log(this.data);
+	
         const that = this;
         gs.write(this.conn, this.data.id, this.data.trials)
             .then(res => {

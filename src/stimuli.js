@@ -45,12 +45,16 @@ export const MeaningName = [
     "Growing", "Shrinking", "Near", "Far", "Approaching", "Receding",
 ];
 
-export const SemanticField = ["HEIGHT", "SIZE", "DISTANCE"];
+export const SemanticField = ["Height", "Size", "Distance"];
 
 export const semantic_field_meanings = {
-    HEIGHT: [1, 2, 3, 4],
-    SIZE: [5, 6, 7, 8],
-    DISTANCE: [9, 10, 11, 12],
+    Height: [1, 2, 3, 4],
+    Size: [5, 6, 7, 8],
+    Distance: [9, 10, 11, 12],
+};
+
+export const semantic_field_for_meaning = (meaning) => {
+    return SemanticField[Math.floor(MeaningName.indexOf(meaning) / 4)];
 };
 
 export const contrast_meanings = ["High", "Low", "Far", "Near", "Large", "Small"];
@@ -110,6 +114,28 @@ export const visual_stimulus_url = (meaning,
         image_ext;
 };
 
+export const block_name = (m, l, u) => {
+    if (m === 'MUSIC') {
+	if (l === 'ENGLISH') {
+	    if (u === 'SINGLE') return 'A';	  
+	    else return 'B';
+	}
+	else {
+	    if (u === 'SINGLE') return 'C';
+	    else return 'D';
+	}
+    } else {
+	if (l === 'ENGLISH') {
+	    if (u === 'SINGLE') return 'E';
+	    else return 'F';
+	}
+	else {
+	    if (u === 'SINGLE') return 'G';
+	    else return 'H';
+	}
+    }
+};
+
 export const blocks = (data) => {
     let blocks = [];
     for (let medium in Medium)
@@ -122,10 +148,11 @@ export const blocks = (data) => {
                     language: lang,
                     unit_size: unit,
 		    participant: participant,
+		    name: block_name(medium, lang, unit),
                 });
             }
         }
-    return blocks;
+    return shuffleArray(blocks);
 };
 
 export const exp1_picture_orientation = (exp1_recordings, unit_size, word, meaning, picture_variant, participant) => {
@@ -151,11 +178,11 @@ export const block_stimuli = (block, picture_variant, exp1_recordings) => {
                                                                      meaning,
                                                                      picture_variant,
                                                                      block.participant);
-                stims.push({
+                const s = {
                     audio: audio_stimulus_url(
                         block.medium,
                         block.language,
-                        block.participant,
+                        block.participant + 1,
                         block.unit_size,
                         word,
                         picture_variant,
@@ -170,8 +197,22 @@ export const block_stimuli = (block, picture_variant, exp1_recordings) => {
                                             picture_variant,
                                             picture_orientation),
                     ],
-                });
-                
+                };
+		
+		Object.assign(s, {
+		    exp1_subject: block.participant + 1,
+		    language: block.language,
+		    medium: block.medium,
+		    unit_size: block.unit_size,
+		    non_word: word,
+		    picture_set: picture_variant,
+		    picture_orientation: picture_orientation,
+		    semantic_field: semantic_field_for_meaning(meaning),
+		    correct_meaning: meaning,
+		    compared_meaning: audio_visual_pairings[meaning][pairing],
+		});
+		console.log(meaning);
+		stims.push(s);
                 i += 1;
             }
     
@@ -190,7 +231,7 @@ export const all_audio_urls = (exp1_recs) => {
                     for (let w in NovelWord) {
                         for (let v = 1; v <= 2; v++) {
                             for (let mn in Meaning) {
-                                const o = exp1_picture_orientation(exp1_recs, u, w, mn, v, p);
+                                const o = exp1_picture_orientation(exp1_recs, u, w, mn, v, p-1);
                                 if (o !== undefined)
                                     urls.push(audio_stimulus_url(m, l, p, u, w, v, o, mn)); 
                             }

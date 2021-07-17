@@ -89,7 +89,7 @@ export const PictureSamplesScreen = ({next, semantic_fields_permutation, picture
         return (
             <div className="container">
               <div className="row">
-                <div className="col-md-8 offset-md-2 infotext text-center picture_samples_imgs">
+                <div className="col-md-8 offset-md-2 infotext text-center picture_imgs">
                   {instructions}
                   {imgs}
                 </div>
