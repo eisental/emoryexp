@@ -9,9 +9,8 @@ import { LoginScreen } from './login.js';
 import { SubjectDataScreen } from './subject_data.js';
 import { PictureSamplesScreen } from './picture_samples.js';
 import { Experiment } from './experiment.js';
-import { SemanticField } from './stimuli.js';
-import { counterbalance, shuffleArray } from './randomize.js';
-import { blocks, all_audio_urls } from './stimuli.js';
+import { counterbalance, shuffleArray, randomElement } from './randomize.js';
+import { blocks } from './stimuli.js';
 
 /* TODO
  * - Randomize the semantic fields list !counterbalanced! between participants!
@@ -59,10 +58,6 @@ class App extends React.Component {
 	trials: []
     }
 
-    mocked_user_props = {
-        picture_orientation: "RIGHT",
-    }
-    
     componentDidMount() {
 	this.data.start_time = new Date().toString();
     }
@@ -392,7 +387,7 @@ class App extends React.Component {
                 return <PictureSamplesScreen next={this.nextStep}
                                              semantic_fields_permutation={this.data.picture_samples_order}
                                              picture_variant={this.data.picture_variant}
-                                             picture_orientation={this.mocked_user_props.picture_orientation}
+                                             picture_orientation={randomElement(['Right', 'Left'])}
                                              key={step} />;
             case this.steps.EXPERIMENT_BLOCKS:
                 return <Experiment next={this.nextStep}

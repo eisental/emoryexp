@@ -7,8 +7,6 @@ import { randomElement, perm_to_seq } from './randomize.js';
 
 import ls from 'local-storage';
 
-// TODO: - counterbalance between semantic field orders
-
 const texts = text_english;
 
 export const PictureSamplesScreen = ({next, semantic_fields_permutation, picture_variant, picture_orientation}) => {
@@ -25,8 +23,8 @@ export const PictureSamplesScreen = ({next, semantic_fields_permutation, picture
             setIntro(ls.get(ls_prefix + "in_intro"));
         }
         else {
-            ls.set(ls_prefix + "in_intro", intro);
-            ls.set(ls_prefix + "semantic_field", semanticFieldIdx);
+            ls.set(ls_prefix + "in_intro", true);
+            ls.set(ls_prefix + "semantic_field", 0);
         }
     }, []);
     
@@ -51,7 +49,7 @@ export const PictureSamplesScreen = ({next, semantic_fields_permutation, picture
         return (
             <div className="container">
               <div className="row">
-                <div className="col-md-8 offset-md-2 infotext">
+                <div className="col-md-8 offset-md-2 infotext picture_imgs">
                   {texts.picture_samples.intro}
                   <div className="text-center">{contrast_img}</div>                  
                   {texts.picture_samples.other_pictures}

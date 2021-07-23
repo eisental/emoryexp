@@ -41,7 +41,7 @@ export class AudioController {
     
     play(audio_id) {
         const playerIdx = this.ids2players[audio_id];
-        console.log(audio_id, playerIdx, this.ids2players);
+
         this.players[playerIdx].play()
 	    .catch(err => {
                 console.log("Error while playing audio file: " + err);

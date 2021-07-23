@@ -1,28 +1,28 @@
-import { randomSequence, shuffleArray } from './randomize.js';
+import { shuffleArray } from './randomize.js';
 
 export const Medium = {
-    MUSIC: "Mu",
-    SPEECH: "Sp",
+    Music: "Mu",
+    Speech: "Sp",
 };
 
 export const Language = {
-    ENGLISH: "E",
-    HEBREW: "H",
+    English: "E",
+    Hebrew: "H",
 };
 
 export const UnitSize = {
-    SINGLE: "Sn",
-    MULTIPLE: "Ml",
+    Single: "Sn",
+    Multiple: "Ml",
 };
 
 export const NovelWord = {
-    BULO: "B",
-    TEPI: "T",
+    Bulo: "B",
+    Tepi: "T",
 };
 
 export const PictureOrientation = {
-    RIGHT: "R",
-    LEFT: "L",
+    Right: "R",
+    Left: "L",
 };
 
 export const Meaning = {
@@ -54,7 +54,7 @@ export const semantic_field_meanings = {
 };
 
 export const semantic_field_for_meaning = (meaning) => {
-    return SemanticField[Math.floor(MeaningName.indexOf(meaning) / 4)];
+    return SemanticField[Math.floor((MeaningName.indexOf(meaning) - 1) / 4)];
 };
 
 export const contrast_meanings = ["High", "Low", "Far", "Near", "Large", "Small"];
@@ -115,22 +115,22 @@ export const visual_stimulus_url = (meaning,
 };
 
 export const block_name = (m, l, u) => {
-    if (m === 'MUSIC') {
-	if (l === 'ENGLISH') {
-	    if (u === 'SINGLE') return 'A';	  
+    if (m === 'Music') {
+	if (l === 'English') {
+	    if (u === 'Single') return 'A';	  
 	    else return 'B';
 	}
 	else {
-	    if (u === 'SINGLE') return 'C';
+	    if (u === 'Single') return 'C';
 	    else return 'D';
 	}
     } else {
-	if (l === 'ENGLISH') {
-	    if (u === 'SINGLE') return 'E';
+	if (l === 'English') {
+	    if (u === 'Single') return 'E';
 	    else return 'F';
 	}
 	else {
-	    if (u === 'SINGLE') return 'G';
+	    if (u === 'Single') return 'G';
 	    else return 'H';
 	}
     }
@@ -168,7 +168,6 @@ export const exp1_picture_orientation = (exp1_recordings, unit_size, word, meani
 export const block_stimuli = (block, picture_variant, exp1_recordings) => {
     const stims = [];
     
-    let i = 0;
     for (let meaning in Meaning)
         for (let pairing of [0, 1])
             for (let word in NovelWord) {
@@ -213,7 +212,6 @@ export const block_stimuli = (block, picture_variant, exp1_recordings) => {
 		});
 		console.log(meaning);
 		stims.push(s);
-                i += 1;
             }
     
     return shuffleArray(stims);

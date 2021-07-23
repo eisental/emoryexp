@@ -1,43 +1,46 @@
 import React from 'react';
-import { LoadingScreen, ContinueButton, InfoScreen } from './ui.js';
+import { LoadingScreen, InfoScreen } from './ui.js';
 import { text_english } from './text.js';
 import { AudioController } from './audio_controller.js';
-import { blocks, block_stimuli } from './stimuli.js';
+import { block_stimuli } from './stimuli.js';
 import { shuffleArray, randomElement } from './randomize.js';
 import ls from 'local-storage';
 
 const texts = text_english;
 
-const TrialUI = ({next, play, disable_play, disable_pictures, pictures}) => {
+const TrialUI = ({next, play, disable_play, disable_pictures, pictures, visual1_location}) => {
     const select_picture = (idx) => {
-        next(idx);
+        next(idx === 0);
     };
 
     const imgs = pictures.map((url, i) =>
         <button
+          className="btn btn-outline-primary"
           onClick={() => select_picture(i)}
 	  disabled={disable_pictures}
-          key={url}
-        >
-          {disable_pictures}
+          key={url} >
           <img src={url}
 	       alt={url} />
         </button>
     );
+
+    const ordered_imgs = visual1_location === 'Left' ? imgs : [imgs[1], imgs[0]];
     
     return (
         <div className="container">
           <div className="row breathing-top">
             <div className="col-md-8 offset-md-2 text-center trial_imgs">
-              {imgs}
+              {ordered_imgs}
             </div>
           </div>
-          <div className="row">
+          <div className="row tiny-breathing-top">
             <div className="col-md-8 offset-md-2 text-center">
-              <button onClick={play} disabled={disable_play}><img width="32" height="32" src="exp2021/icons8-speaker-80.png" alt="play"/></button>
+              <button className="btn btn-outline-success" onClick={play} disabled={disable_play}>
+                <img width="32" height="32" src="exp2021/icons8-speaker-80.png" alt="play"/>
+              </button>
             </div>
           </div>
-          <div className="row">
+          <div className="row tiny-breathing-top">
             <div className="col-md-8 offset-md-2">
               {texts.trial_instructions}
             </div>
@@ -52,54 +55,81 @@ class ExperimentBlock extends React.Component {
 
     state = {
 	trial_idx: 0,
+        play_count: 0,
     }
 
     constructor(props) {
 	super();
         this.props = props;
-        this.play_count = 0;
         this.ls_prefix = `experiment_block${this.props.block_idx}_`;
+
         const cont_trial_idx = ls.get(this.ls_prefix + "trial_idx");
         if (cont_trial_idx !== null) {
             this.state.trial_idx = cont_trial_idx;
+            this.continued_trial = true;
+            this.state.visual1_location = ls.get(this.ls_prefix + "visual1_location");
+            if (!this.props.is_practice) {
+                this.trial_time = props.data.trials[props.data.trials.length-1].trial_time;
+            }
         }
         else { // temp
-            this.state.trial_idx = this.props.block_stimuli.length - 1;
-        }        
-    }
-
-    componentDidMount() {
-        if (!this.props.is_practice) {
-            this.start_time = new Date().getTime();
-            this.props.data.trials.push({start_time: this.start_time,
-                                         trial: this.state.trial_idx});
+            this.continued_trial = false;
         }
     }
 
-    nextTrial = (selected_pic) => {
-        const { trial_idx } = this.state;
-
+    startTrial = (trial_idx) => {
+        const visual1_location = randomElement(['Left', 'Right']);
+        ls.set(this.ls_prefix + "visual1_location", visual1_location);
+        
         if (!this.props.is_practice) {
+            const trial_date = new Date();
+            this.trial_time = trial_date.getTime();
+            this.props.data.trials.push({trial_time: trial_date.toString(),
+                                         trial: trial_idx});
+        }
+
+        this.setState({play_count: 0,
+                       trial_idx: trial_idx,
+                       visual1_location: visual1_location});
+
+        ls.set(this.ls_prefix + "trial_idx", trial_idx);
+        ls.set("data", this.props.data);
+    }
+
+    endTrial = (was_correct) => {
+        const { trial_idx, visual1_location } = this.state;
+        
+        if (!this.props.is_practice) {
+	    // trial end
             const trials = this.props.data.trials;
             const stimuli = this.props.block_stimuli[trial_idx];
-            console.log(stimuli);
+
             Object.assign(trials[trials.length-1], {
                 block: this.props.block_idx,
-                block_name: this.props.data.blocks[this.props.block_idx-1].name
+                block_name: this.props.data.blocks[(this.props.block_idx-1) + 4 * (this.props.data.session-1)].name,
+		trial_duration: new Date().getTime() - this.trial_time,
+                visual1_location: visual1_location,
+                is_correct: was_correct,
             });
-            Object.assign(trials[this.props.block_idx-1], stimuli);
-        }
-        
-        if (trial_idx + 1 < this.props.block_stimuli.length) {            
-            this.start_time = new Date().getTime();
-            this.play_count = 0;
-            this.setState({trial_idx: trial_idx + 1});
-                ls.set(this.ls_prefix + "trial_idx", trial_idx + 1);
+            Object.assign(trials[trials.length-1], stimuli);
 
-            if (!this.props.is_practice) {
-                this.props.data.trials.push({start_time: this.start_time,
-                                             trial: this.state.trial_idx});
-            }
+	    ls.set("data", this.props.data);
+        }        
+    }
+    
+    componentDidMount() {
+        if (!this.continued_trial) {
+            this.startTrial(this.props.block_stimuli.length - 2);
+        }
+    }
+
+    nextTrial = (was_correct) => {
+        const { trial_idx } = this.state;
+
+        this.endTrial(was_correct);
+        
+        if (trial_idx + 1 < this.props.block_stimuli.length) {
+            this.startTrial(trial_idx+1);
         }
         else {
             this.props.next();
@@ -107,20 +137,22 @@ class ExperimentBlock extends React.Component {
     }
 
     playTrial = (trial_idx) => {
-        this.play_count += 1;
+        const { play_count } = this.state;
+        this.setState({play_count: play_count + 1});
         console.log("Playing", this.props.block_stimuli[trial_idx].audio);
         this.props.audio_controller.play(this.props.block_stimuli[trial_idx].audio);
         this.props.set_is_playing(true);
     }
     
     render() {
-        const { trial_idx } = this.state;
+        const { trial_idx, visual1_location, play_count } = this.state;
 
 	return <TrialUI next={this.nextTrial}
                         play={() => this.playTrial(trial_idx)}
                         disable_play={this.props.is_playing}
-                        disable_pictures={this.play_count == 0 || this.props.is_playing}
-                        pictures={this.props.block_stimuli[trial_idx].pictures}/>;
+                        disable_pictures={play_count === 0 || this.props.is_playing}
+                        pictures={this.props.block_stimuli[trial_idx].pictures}
+			visual1_location={visual1_location}/>;
     }
 }
 

@@ -36,7 +36,7 @@ export const text_english = {
 
         musical_instrument:
         <p>
-          Have you studied a musical instrument formally (including vocal trainig)? If you have, please specity for how many years. If you have not, choose "0".
+          Have you studied a musical instrument formally (including vocal training)? If you have, please specity for how many years. If you have not, choose "0".
         </p>,
 
         music_theory:
@@ -79,7 +79,7 @@ export const text_english = {
         intro:
         <React.Fragment>
           <p>
-            Let's have a look at some of the pictures used in the experiment.
+            Let's have a look at the pictures used in the experiment.
           </p>
           <p>
             In some pictures you see 2 objects contrasting in a particular feature. An arrow points at one of the objects. This is the object the picture referes to. The other object is presented for comparison. For instance:
