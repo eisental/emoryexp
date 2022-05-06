@@ -20,9 +20,16 @@
     margin: 4px;
 }
 
+.trial_imgs {
+    margin-left: auto;
+    margin-right: auto;
+    display: inline-grid;
+    grid-template-columns: repeat(2, [col-start] 1fr);
+}
+
 .trial_imgs button {
-    margin: 4px;
-    padding: 4px 4px;
+    margin: 1px;
+    padding: 1px;
 }
 
 table {
@@ -53,3 +60,10 @@ table tr td input[type=radio] {
 table tr td input[type=text] {
     width: 100%;
 }
+
+.grid-wrapper {
+    margin: auto;
+    display: inline-grid;
+    grid-template-columns: repeat(2, [col-start] 1fr);
+    grid-gap: 10px;
+  }

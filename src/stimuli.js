@@ -77,12 +77,12 @@ export const audio_visual_pairings = {
 };
 
 export const audio_ext = ".mp3";
-export const image_ext = ".png";
+export const image_ext = ".jpg";
 
 const audio_stim_dir = "exp2021/stimuli/audio/";
 const visual_stim_dir = "exp2021/stimuli/images/";
 
-export const visual_stim_size = [162, 162];
+export const visual_stim_size = [480, 270];
 
 export const audio_stimulus_url = (medium,
                                    language,
@@ -147,11 +147,36 @@ export const blocks = (data) => {
                     medium: medium,
                     language: lang,
                     unit_size: unit,
-		    participant: participant,
-		    name: block_name(medium, lang, unit),
+		            participant: participant,
+		            name: block_name(medium, lang, unit),
                 });
             }
         }
+    return shuffleArray(blocks);
+};
+
+export const pilot_blocks = (data) => {
+    let blocks = [];
+    for (let unit in UnitSize) {
+        blocks.push({
+            medium: 'Music',
+            language: 'Hebrew',
+            unit_size: unit,
+            participant: 2,
+            name: block_name('Music', 'Hebrew', unit),
+        });
+    }
+
+    for (let unit in UnitSize) {
+        blocks.push({
+            medium: 'Speech',
+            language: 'Hebrew',
+            unit_size: unit,
+            participant: 0,
+            name: block_name('Speech', 'Hebrew', unit),
+        });
+    }
+
     return shuffleArray(blocks);
 };
 
@@ -198,20 +223,20 @@ export const block_stimuli = (block, picture_variant, exp1_recordings) => {
                     ],
                 };
 		
-		Object.assign(s, {
-		    exp1_subject: block.participant + 1,
-		    language: block.language,
-		    medium: block.medium,
-		    unit_size: block.unit_size,
-		    non_word: word,
-		    picture_set: picture_variant,
-		    picture_orientation: picture_orientation,
-		    semantic_field: semantic_field_for_meaning(meaning),
-		    correct_meaning: meaning,
-		    compared_meaning: audio_visual_pairings[meaning][pairing],
-		});
-		console.log(meaning);
-		stims.push(s);
+                Object.assign(s, {
+                    exp1_subject: block.participant + 1,
+                    language: block.language,
+                    medium: block.medium,
+                    unit_size: block.unit_size,
+                    non_word: word,
+                    picture_set: picture_variant,
+                    picture_orientation: picture_orientation,
+                    semantic_field: semantic_field_for_meaning(meaning),
+                    correct_meaning: meaning,
+                    compared_meaning: audio_visual_pairings[meaning][pairing],
+                });
+                console.log(meaning);
+                stims.push(s);
             }
     
     return shuffleArray(stims);

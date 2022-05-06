@@ -41,10 +41,10 @@ export const PictureSamplesScreen = ({next, semantic_fields_permutation, picture
     if (intro) {
         const contrast_src = visual_stimulus_url(randomElement(contrast_meanings),
                                                  picture_variant, picture_orientation);
-        const contrast_img = <img src={contrast_src} alt={contrast_src} />;
+        const contrast_img = <img src={contrast_src} alt={contrast_src} width={visual_stim_size[0]} height={visual_stim_size[1]} />;
         const serial_src = visual_stimulus_url(randomElement(serial_meanings),
                                                picture_variant, picture_orientation);
-        const serial_img= <img src={serial_src} alt={serial_src} />;
+        const serial_img = <img src={serial_src} alt={serial_src}  width={visual_stim_size[0]} height={visual_stim_size[1]} />;
         
         return (
             <div className="container">
@@ -89,6 +89,8 @@ export const PictureSamplesScreen = ({next, semantic_fields_permutation, picture
               <div className="row">
                 <div className="col-md-8 offset-md-2 infotext text-center picture_imgs">
                   {instructions}
+                </div>
+                <div className="grid-wrapper">
                   {imgs}
                 </div>
               </div>

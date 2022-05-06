@@ -10,7 +10,7 @@ import { SubjectDataScreen } from './subject_data.js';
 import { PictureSamplesScreen } from './picture_samples.js';
 import { Experiment } from './experiment.js';
 import { counterbalance, shuffleArray, randomElement } from './randomize.js';
-import { blocks } from './stimuli.js';
+import { pilot_blocks } from './stimuli.js';
 
 /* TODO
  * - Randomize the semantic fields list !counterbalanced! between participants!
@@ -19,16 +19,16 @@ import { blocks } from './stimuli.js';
 
 const texts = text_english;
 
-const FinishScreen = ({done_saving, data_save_error}) => {
-  return (
-    <div className="container">
-      <div className="col-md-8 offset-md-2 finish-screen">
-        {texts.finish}
-        <p className="font-weight-bold">{done_saving ? texts.finish_success : texts.finish_wait }</p>
-        <p className="alert-error">{data_save_error}</p>
-      </div>
-    </div>
-  );
+const FinishScreen = ({ done_saving, data_save_error }) => {
+    return (
+        <div className="container">
+            <div className="col-md-8 offset-md-2 finish-screen">
+                {texts.finish}
+                <p className="font-weight-bold">{done_saving ? texts.finish_success : texts.finish_wait}</p>
+                <p className="alert-error">{data_save_error}</p>
+            </div>
+        </div>
+    );
 };
 
 class App extends React.Component {
@@ -39,12 +39,12 @@ class App extends React.Component {
     }
 
     steps = {
-	LOGIN: 1,
-	SUBJECT_DATA: 2,
-	INTRO: 3,
-	PICTURE_SAMPLES: 4,
-	EXPERIMENT_BLOCKS: 5,
-	FINISH: 6,
+        LOGIN: 1,
+        SUBJECT_DATA: 2,
+        INTRO: 3,
+        PICTURE_SAMPLES: 4,
+        EXPERIMENT_BLOCKS: 5,
+        FINISH: 6,
     }
 
     state = {
@@ -55,13 +55,13 @@ class App extends React.Component {
     }
 
     data = {
-	trials: []
+        trials: []
     }
 
     componentDidMount() {
-	this.data.start_time = new Date().toString();
+        this.data.start_time = new Date().toString();
     }
-    
+
     nextStep = () => {
         const { step } = this.state;
         this.setStep(step + 1);
@@ -74,7 +74,7 @@ class App extends React.Component {
         else if (prev_step === this.steps.SUBJECT_DATA) {
             ls.set("data", this.data);
         }
-        
+
         return null;
     }
 
@@ -85,13 +85,13 @@ class App extends React.Component {
             if (altered_step) {
                 new_step = altered_step;
             }
-            
+
             if (new_step > 2) {
                 ls.set("step", new_step);
             }
 
-            this.setState({step: new_step});
-            this.stepChanged(new_step);            
+            this.setState({ step: new_step });
+            this.stepChanged(new_step);
         }
     }
 
@@ -108,24 +108,33 @@ class App extends React.Component {
                     return true;
                 }
                 else {
-                    this.setState({error: texts.error_no_user_sheet + this.data.id,
-                                   loading: false});
+                    this.setState({
+                        error: texts.error_no_user_sheet + this.data.id,
+                        loading: false
+                    });
                     return false;
                 }
             })
             .catch(err => {
-                this.setState({error: texts.error_no_connection + " (" + err + ")."});
+                this.setState({ error: texts.error_no_connection + " (" + err + ")." });
             });
     }
 
+    // PILOT: We use a partial list of the first experiment trials
+    // load_exp1_recordings = () => {
+    //     return gs.read(this.conn, "FirstExperimentTrials", "B2:G769")
+    //         .then(res => res.json())
+    //         .then(exp1_data => this.exp1_recordings = exp1_data.values);
+    // }
+
     load_exp1_recordings = () => {
-        return gs.read(this.conn, "FirstExperimentTrials", "B2:G769")
+        return gs.read(this.conn, "PilotFirstExperimentTrials", "B2:G769")
             .then(res => res.json())
             .then(exp1_data => this.exp1_recordings = exp1_data.values);
     }
-    
+
     handle_login = () => {
-        this.setState({loading: true});
+        this.setState({ loading: true });
 
         this.check_for_subject_sheet()
             .then(found_sheet => {
@@ -136,10 +145,10 @@ class App extends React.Component {
                             if (previous_sessions.length === 0) {
                                 // First session. Not continued!
                                 this.start_new_session(1);
-                            } 
+                            }
                             else {
                                 // Not first session or continued session.
-                                const last_session = previous_sessions[previous_sessions.length-1];
+                                const last_session = previous_sessions[previous_sessions.length - 1];
                                 const last_session_number = parseInt(last_session.session);
 
                                 if (last_session.event !== SessionEvent.SESSION_END) {
@@ -147,76 +156,79 @@ class App extends React.Component {
                                     this.continue_session(last_session_number);
                                 }
                                 else {
+                                    // PILOT: In the pilot we have a single session (change to: === 2 for two sessions)
                                     // Last session ended. 
-                                    if (last_session_number === 2) {
-                                        this.setState({error: texts.error_2nd_session_over,
-                                                       loading: false});
+                                    if (last_session_number === 1) {
+                                        this.setState({
+                                            error: texts.error_2nd_session_over,
+                                            loading: false
+                                        });
                                     }
                                     else {
                                         // Second session
                                         this.start_new_session(2);
                                     }
                                 }
-                            }                            
+                            }
                         })
                         .catch(err => {
-                            this.setState({error: texts.error_no_connection + " (" + err + ")."});
+                            this.setState({ error: texts.error_no_connection + " (" + err + ")." });
                         });
                 }
             });
     }
 
     start_new_session = (number) => {
-	console.log("Start new session:", number);
+        console.log("Start new session:", number);
         this.data.session = number;
 
         const start_session = () => {
-	    console.log("Clearing local storage");
+            console.log("Clearing local storage");
             ls.clear();
             ls.set("data", this.data);
-            
+
             if (number === 2 && this.state.step === this.steps.SUBJECT_DATA) {
                 this.nextStep();
             }
             this.load_exp1_recordings()
                 .then(() => {
                     ls.set("exp1_recordings", this.exp1_recordings);
-                    this.setState({loading: false});
+                    this.setState({ loading: false });
                 });
         };
-        
+
         writeSessionEvent(this.conn, this.data, SessionEvent.SESSION_START);
         if (number === 1) {
             this.generate_subject_settings()
                 .then(() => {
-                    this.setState({loading: false});
+                    this.setState({ loading: false });
                     start_session();
                 });
         }
         else {
-            
+
             this.load_subject_settings()
                 .then(start_session);
-        }        
+        }
     }
 
     continue_session = (number) => {
-	console.log("Continue session:", number);
+        console.log("Continue session:", number);
         const cont_data = ls.get("data");
         if (cont_data && cont_data.id === this.data.id) {
             this.data = cont_data;
             writeSessionEvent(this.conn, this.data, SessionEvent.SESSION_CONTINUED);
             this.load_subject_settings()
-                .then(() => this.setState({loading: false}));
+                .then(() => this.setState({ loading: false }));
 
             const exp1_recordings = ls.get("exp1_recordings");
             if (exp1_recordings) {
-                this.exp1_recordings = exp1_recordings;            
+                this.exp1_recordings = exp1_recordings;
             }
             else {
                 this.load_exp1_recordings();
             }
-            
+
             const cont_step = ls.get("step");
             if (cont_step) {
                 if (cont_step === this.steps.SUBJECT_DATA && number === 2) {
@@ -240,7 +252,7 @@ class App extends React.Component {
                     // first subject
                     this.data.picture_samples_order = 0;
                     this.data.picture_variant = 1;
-		    this.data.left_picture = 0;
+                    this.data.left_picture = 0;
 
                     const exp1_subjects = shuffleArray([0, 1, 2, 3, 4, 5, 6, 7]);
                     this.data.subject_Mu_E = exp1_subjects[0];
@@ -261,19 +273,20 @@ class App extends React.Component {
                         this.data.picture_variant = 1;
                     }
                     else {
-                        const prev_group_variants = prev_group_settings.map(r => r[3]);
-                        let set1_count = 0;
-                        for (let v of prev_group_variants) {
-                            if (v === "1")
-                                set1_count += 1;                            
-                        }
-                        const set2_count = prev_group_variants.length - set1_count;
-                        this.data.picture_variant = set1_count > set2_count ? 2 : 1;
+                        // PILOT: we always use variant 1
+                        // const prev_group_variants = prev_group_settings.map(r => r[3]);
+                        // let set1_count = 0;
+                        // for (let v of prev_group_variants) {
+                        //     if (v === "1")
+                        //         set1_count += 1;
+                        // }
+                        // const set2_count = prev_group_variants.length - set1_count;
+                        this.data.picture_variant = 1 // set1_count > set2_count ? 2 : 1;
                     }
 
                     // Picture order in a single trial
-		    const prev_left_picture = prev_settings.map(r => r[4]);
-		    this.data.left_picture = counterbalance(2, prev_left_picture);
+                    const prev_left_picture = prev_settings.map(r => r[4]);
+                    this.data.left_picture = counterbalance(2, prev_left_picture);
 
                     // Exp1 participant per block
                     if (prev_group_settings.length === 0) {
@@ -288,19 +301,19 @@ class App extends React.Component {
                         const prev_subject_Mu_H = prev_group_settings.map(r => r[6]);
                         const prev_subject_Sp_E = prev_group_settings.map(r => r[7]);
                         const prev_subject_Sp_H = prev_group_settings.map(r => r[8]);
-                        
+
                         this.data.subject_Mu_E = counterbalance(8, prev_subject_Mu_E);
                         this.data.subject_Mu_H = counterbalance(8, prev_subject_Mu_H);
                         this.data.subject_Sp_E = counterbalance(8, prev_subject_Sp_E);
                         this.data.subject_Sp_H = counterbalance(8, prev_subject_Sp_H);
                     }
                 }
+                // NOTE: Use blocks(this.data) for the full experiment
+                this.data.blocks = pilot_blocks(this.data);
 
-                this.data.blocks = blocks(this.data);
-                
                 const subject_row = Object.assign({}, this.data);
-		subject_row.blocks = JSON.stringify(subject_row.blocks);
-                return gs.write(this.conn, "Subjects", subject_row); 
+                subject_row.blocks = JSON.stringify(subject_row.blocks);
+                return gs.write(this.conn, "Subjects", subject_row);
             });
     };
 
@@ -309,16 +322,16 @@ class App extends React.Component {
             .then(res => res.json())
             .then(subjects_sheet => {
                 if (!subjects_sheet.values) {
-                    this.setState({error: texts.error_no_subject_settings + this.data.id});                    
+                    this.setState({ error: texts.error_no_subject_settings + this.data.id });
                 }
                 else {
                     // find last settings row for participant id
                     const rows = subjects_sheet.values.filter(row => row[0] === this.data.id);
                     if (rows.length === 0) {
-                        this.setState({error: texts.error_no_subject_settings + this.data.id});
+                        this.setState({ error: texts.error_no_subject_settings + this.data.id });
                     }
                     else {
-                        const settings_row = rows[rows.length-1];
+                        const settings_row = rows[rows.length - 1];
                         this.data.group = settings_row[1];
                         this.data.picture_samples_order = settings_row[2];
                         this.data.picture_variant = settings_row[3];
@@ -328,13 +341,13 @@ class App extends React.Component {
                         this.data.subject_Sp_E = settings_row[7];
                         this.data.subject_Sp_H = settings_row[8];
                         this.data.blocks = JSON.parse(settings_row[9]);
-                    }                   
+                    }
                 }
             });
     };
-    
+
     save_data = () => {
-	
+
         this.data.end_time = new Date().toString();
         this.data.trials.forEach(t => {
             t.id = this.data.id;
@@ -343,28 +356,28 @@ class App extends React.Component {
             t.end_time = this.data.end_time;
             if (this.data.session === 1) {
                 t.gender = this.data.gender;
-		t.age = this.data.age;
-		t.musical_instrument = this.data.musical_instrument;
+                t.age = this.data.age;
+                t.musical_instrument = this.data.musical_instrument;
                 t.music_theory = this.data.music_theory;
                 t.activity = this.data.activity;
                 t.activity_specify = this.data.activity_specify;
                 t.acting = this.data.acting;
             }
         });
-	console.log(this.data);
-	
+        console.log(this.data);
+
         const that = this;
         gs.write(this.conn, this.data.id, this.data.trials)
             .then(res => {
-                that.setState({done_saving: true});
+                that.setState({ done_saving: true });
                 writeSessionEvent(this.conn, this.data, SessionEvent.SESSION_END);
             })
             .catch(this.show_data_save_error);
-        
+
     }
-    
+
     render() {
-	const { step, loading, error } = this.state;
+        const { step, loading, error } = this.state;
 
         if (error) {
             return <ErrorScreen error={error} />;
@@ -373,31 +386,31 @@ class App extends React.Component {
             return <LoadingScreen />;
         }
         else {
-            switch(step) {
-            case this.steps.LOGIN:
-                return <LoginScreen next={this.nextStep} data={this.data} key={step} />;
-            case this.steps.SUBJECT_DATA:
-                return <SubjectDataScreen next={this.nextStep} data={this.data} key={step} />;
-            case this.steps.INTRO:
-                return <InfoScreen next={this.nextStep}
-                                   info={texts.introduction}
-                                   continue_label={texts.continue_label}
-                                   key={step} />;
-            case this.steps.PICTURE_SAMPLES:
-                return <PictureSamplesScreen next={this.nextStep}
-                                             semantic_fields_permutation={this.data.picture_samples_order}
-                                             picture_variant={this.data.picture_variant}
-                                             picture_orientation={randomElement(['Right', 'Left'])}
-                                             key={step} />;
-            case this.steps.EXPERIMENT_BLOCKS:
-                return <Experiment next={this.nextStep}
-                                   data={this.data}
-                                   exp1_recordings={this.exp1_recordings}
-                                   key={step} />;
-            case this.steps.FINISH:
-                return <FinishScreen done_saving={this.state.done_saving} key={step} />;
-            default:
-                return null;
+            switch (step) {
+                case this.steps.LOGIN:
+                    return <LoginScreen next={this.nextStep} data={this.data} key={step} />;
+                case this.steps.SUBJECT_DATA:
+                    return <SubjectDataScreen next={this.nextStep} data={this.data} key={step} />;
+                case this.steps.INTRO:
+                    return <InfoScreen next={this.nextStep}
+                        info={texts.introduction}
+                        continue_label={texts.continue_label}
+                        key={step} />;
+                case this.steps.PICTURE_SAMPLES:
+                    return <PictureSamplesScreen next={this.nextStep}
+                        semantic_fields_permutation={this.data.picture_samples_order}
+                        picture_variant={this.data.picture_variant}
+                        picture_orientation={randomElement(['Right', 'Left'])}
+                        key={step} />;
+                case this.steps.EXPERIMENT_BLOCKS:
+                    return <Experiment next={this.nextStep}
+                        data={this.data}
+                        exp1_recordings={this.exp1_recordings}
+                        key={step} />;
+                case this.steps.FINISH:
+                    return <FinishScreen done_saving={this.state.done_saving} key={step} />;
+                default:
+                    return null;
             }
         }
     }
