@@ -79,8 +79,8 @@ export const audio_visual_pairings = {
 export const audio_ext = ".mp3";
 export const image_ext = ".jpg";
 
-const audio_stim_dir = "exp2021/stimuli/audio/";
-const visual_stim_dir = "exp2021/stimuli/images/";
+const audio_stim_dir = "stimuli/audio/";
+const visual_stim_dir = "stimuli/images/";
 
 export const visual_stim_size = [480, 270];
 
