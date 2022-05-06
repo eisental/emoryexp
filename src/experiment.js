@@ -34,7 +34,7 @@ const TrialUI = ({ next, play, disable_play, disable_pictures, pictures, visual1
             <div className="row tiny-breathing-top">
                 <div className="col-md-8 offset-md-2 text-center">
                     <button className="btn btn-outline-success" onClick={play} disabled={disable_play}>
-                        <img width="32" height="32" src="exp2021/icons8-speaker-80.png" alt="play" />
+                        <img width="32" height="32" src="icons8-speaker-80.png" alt="play" />
                     </button>
                 </div>
             </div>
