@@ -1,7 +1,7 @@
 import React from 'react';
-import { text_english } from './text.js';
+import { texts } from './text.js';
 
-const texts = text_english;
+export const classNames = (...classes) => classes.filter(Boolean).join(' ');
 
 export const openFullscreen = () => {
   const elem = document.documentElement;
@@ -16,16 +16,16 @@ export const openFullscreen = () => {
   }
 };
 
-export const LoadingScreen = () => {
-    return <div className="containter text-center"><p className="lead">{texts.loading}</p></div>;
+export const LoadingScreen = ({language}) => {
+    return <div className="containter text-center"><p className="lead">{texts[language].loading}</p></div>;
 };
 
-export const ErrorScreen = ({error}) => {
+export const ErrorScreen = ({error, language}) => {
   return (
     <div className="container">
       <div className="row">
         <div className="col-sm">
-          <p>{texts.error_occurred}:</p>
+          <p>{texts[language].error_occurred}:</p>
           <p className="lead center">{error}</p>
         </div>
       </div>
@@ -33,15 +33,15 @@ export const ErrorScreen = ({error}) => {
   );
 };
 
-export const InfoScreen = ({info, next, continue_disabled, continue_label}) => {
+export const InfoScreen = ({info, next, continue_disabled, continue_label, rtl}) => {
   return (
-    <div className="container">
-      <div className="row">
-        <div className="col-md-8 offset-md-2 infotext">
+    <div className={classNames("container", rtl && "text-right")} dir={rtl && "rtl"}>
+      <div className="row justify-content-center">
+        <div className="col-md-8 infotext">
           {info}
         </div>
       </div>
-      <div className="row">
+      <div className="row justify-content-center">
         <div className="col"></div>
         <div className="col text-center">
           <br/>

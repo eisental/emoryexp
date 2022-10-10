@@ -1,14 +1,13 @@
 import React from 'react';
-import { LoadingScreen, InfoScreen } from './ui.js';
-import { text_english } from './text.js';
+import { LoadingScreen, InfoScreen, classNames } from './ui.js';
+import { texts as allTexts } from './text.js';
 import { AudioController } from './audio_controller.js';
 import { block_stimuli, visual_stim_size } from './stimuli.js';
 import { shuffleArray, randomElement } from './randomize.js';
 import ls from 'local-storage';
 
-const texts = text_english;
-
-const TrialUI = ({ next, play, disable_play, disable_pictures, pictures, visual1_location }) => {
+const TrialUI = ({ next, play, disable_play, disable_pictures, pictures, visual1_location, language }) => {
+    const texts = allTexts[language];
     const select_picture = (idx) => {
         next(idx === 0);
     };
@@ -25,21 +24,21 @@ const TrialUI = ({ next, play, disable_play, disable_pictures, pictures, visual1
     const ordered_imgs = visual1_location === 'Left' ? imgs : [imgs[1], imgs[0]];
 
     return (
-        <div className="container">
-            <div className="row breathing-top">
+        <div className={classNames("container", language === "hebrew" && "text-right")} dir={language === "hebrew" && "rtl"}>
+            <div className="row breathing-top justify-content-center">
                 <div className="trial_imgs">
                     {ordered_imgs}
                 </div>
             </div>
-            <div className="row tiny-breathing-top">
-                <div className="col-md-8 offset-md-2 text-center">
+            <div className="row tiny-breathing-top justify-content-center">
+                <div className="col-md-8 text-center">
                     <button className="btn btn-outline-success" onClick={play} disabled={disable_play}>
                         <img width="32" height="32" src="icons8-speaker-80.png" alt="play" />
                     </button>
                 </div>
             </div>
-            <div className="row tiny-breathing-top">
-                <div className="col-md-8 offset-md-2">
+            <div className="row tiny-breathing-top justify-content-center">
+                <div className="col-md-8">
                     {texts.trial_instructions}
                 </div>
             </div>
@@ -122,6 +121,9 @@ class ExperimentBlock extends React.Component {
     componentDidMount() {
         if (!this.continued_trial) {
             this.startTrial(0);
+
+            // for testing purposes:
+            // this.startTrial(this.props.block_stimuli.length-2);
         }
     }
 
@@ -149,12 +151,14 @@ class ExperimentBlock extends React.Component {
     render() {
         const { trial_idx, visual1_location, play_count } = this.state;
 
-        return <TrialUI next={this.nextTrial}
+        return <TrialUI 
+            next={this.nextTrial}
             play={() => this.playTrial(trial_idx)}
             disable_play={this.props.is_playing}
             disable_pictures={play_count === 0 || this.props.is_playing}
             pictures={this.props.block_stimuli[trial_idx].pictures}
-            visual1_location={visual1_location} />;
+            visual1_location={visual1_location}
+            language={this.props.data.language} />;
     }
 }
 
@@ -246,19 +250,22 @@ export class Experiment extends React.Component {
     }
 
     render() {
+        const texts = allTexts[this.data.language];
         const { step, is_loading, is_playing } = this.state;
 
         if (is_loading) {
-            return <LoadingScreen />;
+            return <LoadingScreen language={this.data.language}/>;
         }
 
         switch (step) {
             case this.steps.PRACTICE_INFO:
                 return <InfoScreen info={texts.practice_info}
                     continue_label={texts.continue_label}
-                    next={this.nextStep} />;
+                    next={this.nextStep} 
+                    rtl={this.data.language === "hebrew"} />;
             case this.steps.PRACTICE_TRIALS:
-                return <ExperimentBlock next={this.nextStep}
+                return <ExperimentBlock 
+                    next={this.nextStep}
                     data={this.data}
                     is_playing={is_playing}
                     set_is_playing={(v) => this.setState({ is_playing: v })}
@@ -268,6 +275,7 @@ export class Experiment extends React.Component {
                     audio_controller={this.audio_controller} />;
             case this.steps.EXPERIMENT_INFO:
                 return <InfoScreen info={texts.experiment_info}
+                    rtl={this.data.language === "hebrew"}
                     continue_label={texts.continue_label}
                     next={this.nextStep} />;
             case this.steps.EXPERIMENT_BLOCK1:
@@ -282,6 +290,7 @@ export class Experiment extends React.Component {
             case this.steps.PAUSE1:
                 return <InfoScreen info={texts.pause}
                     continue_label={texts.continue_label}
+                    rtl={this.data.language === "hebrew"}
                     next={this.nextStep} />;
             case this.steps.EXPERIMENT_BLOCK2:
                 return <ExperimentBlock next={this.nextStep}
@@ -295,6 +304,7 @@ export class Experiment extends React.Component {
             case this.steps.PAUSE2:
                 return <InfoScreen info={texts.pause}
                     continue_label={texts.continue_label}
+                    rtl={this.data.language === "hebrew"}
                     next={this.nextStep} />;
             case this.steps.EXPERIMENT_BLOCK3:
                 return <ExperimentBlock next={this.nextStep}
@@ -308,6 +318,7 @@ export class Experiment extends React.Component {
             case this.steps.PAUSE3:
                 return <InfoScreen info={texts.pause}
                     continue_label={texts.continue_label}
+                    rtl={this.data.language === "hebrew"}
                     next={this.nextStep} />;
             case this.steps.EXPERIMENT_BLOCK4:
                 return <ExperimentBlock next={this.nextStep}

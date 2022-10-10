@@ -2,8 +2,8 @@ import './App.css';
 import React from 'react';
 import ls from 'local-storage';
 import { readSessionData, writeSessionEvent, SessionEvent, does_user_sheet_exists } from './sessions.js';
-import { LoadingScreen, ErrorScreen, InfoScreen } from './ui.js';
-import { text_english } from './text.js';
+import { LoadingScreen, ErrorScreen, InfoScreen, classNames } from './ui.js';
+import { texts } from './text.js';
 import gs from './spreadsheet_io.js';
 import { LoginScreen } from './login.js';
 import { SubjectDataScreen } from './subject_data.js';
@@ -11,21 +11,23 @@ import { PictureSamplesScreen } from './picture_samples.js';
 import { Experiment } from './experiment.js';
 import { counterbalance, shuffleArray, randomElement } from './randomize.js';
 import { pilot_blocks } from './stimuli.js';
+import { FinalQuestionsScreen } from './final_questions.js';
 
 /* TODO
  * - Randomize the semantic fields list !counterbalanced! between participants!
  * - Select the correct set of pictures for the current subject
  */
 
-const texts = text_english;
 
-const FinishScreen = ({ done_saving, data_save_error }) => {
+const FinishScreen = ({ done_saving, data_save_error, language }) => {
     return (
-        <div className="container">
-            <div className="col-md-8 offset-md-2 finish-screen">
-                {texts.finish}
-                <p className="font-weight-bold">{done_saving ? texts.finish_success : texts.finish_wait}</p>
-                <p className="alert-error">{data_save_error}</p>
+        <div className={classNames("container", language === "hebrew" && "text-right")} dir={language === "hebrew" && "rtl"}>
+            <div className="row justify-content-center">
+                <div className="col-md-8 finish-screen">
+                    {texts[language].finish.done}
+                    <p className="font-weight-bold">{done_saving ? texts[language].finish_success : texts[language].finish_wait}</p>
+                    <p className="alert-error">{data_save_error}</p>
+                </div>
             </div>
         </div>
     );
@@ -44,7 +46,8 @@ class App extends React.Component {
         INTRO: 3,
         PICTURE_SAMPLES: 4,
         EXPERIMENT_BLOCKS: 5,
-        FINISH: 6,
+        FINAL_QUESTIONS: 6,
+        FINISH: 7,
     }
 
     state = {
@@ -55,7 +58,8 @@ class App extends React.Component {
     }
 
     data = {
-        trials: []
+        trials: [],
+        language: "english",
     }
 
     componentDidMount() {
@@ -109,14 +113,14 @@ class App extends React.Component {
                 }
                 else {
                     this.setState({
-                        error: texts.error_no_user_sheet + this.data.id,
+                        error: texts[this.data.language].error_no_user_sheet + this.data.id,
                         loading: false
                     });
                     return false;
                 }
             })
             .catch(err => {
-                this.setState({ error: texts.error_no_connection + " (" + err + ")." });
+                this.setState({ error: texts[this.data.language].error_no_connection + " (" + err + ")." });
             });
     }
 
@@ -160,7 +164,7 @@ class App extends React.Component {
                                     // Last session ended. 
                                     if (last_session_number === 1) {
                                         this.setState({
-                                            error: texts.error_2nd_session_over,
+                                            error: texts[this.data.language].error_2nd_session_over,
                                             loading: false
                                         });
                                     }
@@ -172,7 +176,7 @@ class App extends React.Component {
                             }
                         })
                         .catch(err => {
-                            this.setState({ error: texts.error_no_connection + " (" + err + ")." });
+                            this.setState({ error: texts[this.data.language].error_no_connection + " (" + err + ")." });
                         });
                 }
             });
@@ -322,13 +326,13 @@ class App extends React.Component {
             .then(res => res.json())
             .then(subjects_sheet => {
                 if (!subjects_sheet.values) {
-                    this.setState({ error: texts.error_no_subject_settings + this.data.id });
+                    this.setState({ error: texts[this.data.language].error_no_subject_settings + this.data.id });
                 }
                 else {
                     // find last settings row for participant id
                     const rows = subjects_sheet.values.filter(row => row[0] === this.data.id);
                     if (rows.length === 0) {
-                        this.setState({ error: texts.error_no_subject_settings + this.data.id });
+                        this.setState({ error: texts[this.data.language].error_no_subject_settings + this.data.id });
                     }
                     else {
                         const settings_row = rows[rows.length - 1];
@@ -362,6 +366,9 @@ class App extends React.Component {
                 t.activity = this.data.activity;
                 t.activity_specify = this.data.activity_specify;
                 t.acting = this.data.acting;
+                t.strategy = this.data.strategy;
+                t.relationships = this.data.relationships;
+                t.feedback = this.data.feedback;
             }
         });
         console.log(this.data);
@@ -380,24 +387,26 @@ class App extends React.Component {
         const { step, loading, error } = this.state;
 
         if (error) {
-            return <ErrorScreen error={error} />;
+            return <ErrorScreen error={error} language={this.data.language} />;
         }
         else if (loading) {
-            return <LoadingScreen />;
+            return <LoadingScreen language={this.data.language} />;
         }
         else {
             switch (step) {
                 case this.steps.LOGIN:
                     return <LoginScreen next={this.nextStep} data={this.data} key={step} />;
                 case this.steps.SUBJECT_DATA:
-                    return <SubjectDataScreen next={this.nextStep} data={this.data} key={step} />;
+                    return <SubjectDataScreen next={this.nextStep} data={this.data} key={step} language={this.data.language} />;
                 case this.steps.INTRO:
-                    return <InfoScreen next={this.nextStep}
-                        info={texts.introduction}
-                        continue_label={texts.continue_label}
+                    return <InfoScreen next={this.nextStep} rtl={this.data.language === "hebrew"}
+                        info={texts[this.data.language].introduction}
+                        continue_label={texts[this.data.language].continue_label}
                         key={step} />;
                 case this.steps.PICTURE_SAMPLES:
-                    return <PictureSamplesScreen next={this.nextStep}
+                    return <PictureSamplesScreen
+                        language={this.data.language}
+                        next={this.nextStep}
                         semantic_fields_permutation={this.data.picture_samples_order}
                         picture_variant={this.data.picture_variant}
                         picture_orientation={randomElement(['Right', 'Left'])}
@@ -407,8 +416,10 @@ class App extends React.Component {
                         data={this.data}
                         exp1_recordings={this.exp1_recordings}
                         key={step} />;
+                case this.steps.FINAL_QUESTIONS:
+                    return <FinalQuestionsScreen next={this.nextStep} data={this.data} />;
                 case this.steps.FINISH:
-                    return <FinishScreen done_saving={this.state.done_saving} key={step} />;
+                    return <FinishScreen done_saving={this.state.done_saving} key={step} language={this.data.language} />;
                 default:
                     return null;
             }
