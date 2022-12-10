@@ -3,7 +3,7 @@ import { LoadingScreen, InfoScreen, classNames } from './ui.js';
 import { texts as allTexts } from './text.js';
 import { AudioController } from './audio_controller.js';
 import { block_stimuli, visual_stim_size } from './stimuli.js';
-import { shuffleArray, randomElement } from './randomize.js';
+import { shuffleArray, randomElement, randomElements } from './randomize.js';
 import ls from 'local-storage';
 
 const TrialUI = ({ next, play, disable_play, disable_pictures, pictures, visual1_location, language }) => {
@@ -58,7 +58,10 @@ class ExperimentBlock extends React.Component {
     constructor(props) {
         super();
         this.props = props;
-        this.ls_prefix = `experiment_block${this.props.block_idx}_`;
+        this.ls_prefix = `experiment_block${props.block_idx}_`;
+        this.block_stimuli = !props.is_practice ? randomElements(props.block_stimuli, 2).concat(props.block_stimuli) : props.block_stimuli;
+
+        console.log(`Block ${props.block_idx}. Trials:`, this.block_stimuli);
 
         const cont_trial_idx = ls.get(this.ls_prefix + "trial_idx");
         if (cont_trial_idx !== null) {
@@ -100,14 +103,14 @@ class ExperimentBlock extends React.Component {
     endTrial = (was_correct) => {
         const { trial_idx, visual1_location } = this.state;
 
-        if (!this.props.is_practice) {
+        if (!this.props.is_practice && trial_idx >= 2 /* 2 practice stimuli in each block */) {
             // trial end
             const trials = this.props.data.trials;
-            const stimuli = this.props.block_stimuli[trial_idx];
+            const stimuli = this.block_stimuli[trial_idx];
 
             Object.assign(trials[trials.length - 1], {
                 block: this.props.block_idx,
-                block_name: this.props.data.blocks[(this.props.block_idx - 1) + 4 * (this.props.data.session - 1)].name,
+                // block_name: this.props.data.blocks[(this.block_idx - 1) + 4 * (this.data.session - 1)].name,
                 trial_duration: new Date().getTime() - this.trial_time,
                 visual1_location: visual1_location,
                 is_correct: was_correct,
@@ -123,7 +126,7 @@ class ExperimentBlock extends React.Component {
             this.startTrial(0);
 
             // for testing purposes:
-            // this.startTrial(this.props.block_stimuli.length-2);
+            // this.startTrial(this.block_stimuli.length - 2);
         }
     }
 
@@ -132,7 +135,7 @@ class ExperimentBlock extends React.Component {
 
         this.endTrial(was_correct);
 
-        if (trial_idx + 1 < this.props.block_stimuli.length) {
+        if (trial_idx + 1 < this.block_stimuli.length) {
             this.startTrial(trial_idx + 1);
         }
         else {
@@ -143,20 +146,20 @@ class ExperimentBlock extends React.Component {
     playTrial = (trial_idx) => {
         const { play_count } = this.state;
         this.setState({ play_count: play_count + 1 });
-        console.log("Playing", this.props.block_stimuli[trial_idx].audio);
-        this.props.audio_controller.play(this.props.block_stimuli[trial_idx].audio);
+        console.log("Playing", this.block_stimuli[trial_idx].audio);
+        this.props.audio_controller.play(this.block_stimuli[trial_idx].audio);
         this.props.set_is_playing(true);
     }
 
     render() {
         const { trial_idx, visual1_location, play_count } = this.state;
 
-        return <TrialUI 
+        return <TrialUI
             next={this.nextTrial}
             play={() => this.playTrial(trial_idx)}
             disable_play={this.props.is_playing}
             disable_pictures={play_count === 0 || this.props.is_playing}
-            pictures={this.props.block_stimuli[trial_idx].pictures}
+            pictures={this.block_stimuli[trial_idx].pictures}
             visual1_location={visual1_location}
             language={this.props.data.language} />;
     }
@@ -188,7 +191,10 @@ export class Experiment extends React.Component {
         super();
         this.next = next;
         this.data = data;
+        this.exp1_recordings = exp1_recordings;
+    }
 
+    componentDidMount() {
         const cont_block_stimuli = ls.get(this.ls_prefix + "block_stimuli");
 
         if (cont_block_stimuli) {
@@ -199,13 +205,11 @@ export class Experiment extends React.Component {
 
             const cont_step = ls.get(this.ls_prefix + "step");
             if (cont_step)
-                this.state.step = cont_step;
+                this.setState({ step: cont_step });
         }
         else {
             this.block_stimuli = this.data.blocks.map(
-                block => block_stimuli(block,
-                    this.data.picture_variant,
-                    exp1_recordings));
+                block => block_stimuli(block, this.exp1_recordings, this.data.picture_variant));
             this.practice_stimuli = shuffleArray(this.block_stimuli.map(
                 b => randomElement(b)).flat(1));
 
@@ -220,9 +224,6 @@ export class Experiment extends React.Component {
         this.session_block_stimuli = this.block_stimuli.slice(first_block_idx, first_block_idx + 4);
         console.log("blocks for session", this.data.session, "\n", this.data.blocks.slice(first_block_idx, first_block_idx + 4));
 
-    }
-
-    componentDidMount() {
         const onDoneLoading = () => {
             console.log("Done loading audio files.");
             this.setState({ is_loading: false });
@@ -254,17 +255,17 @@ export class Experiment extends React.Component {
         const { step, is_loading, is_playing } = this.state;
 
         if (is_loading) {
-            return <LoadingScreen language={this.data.language}/>;
+            return <LoadingScreen language={this.data.language} />;
         }
 
         switch (step) {
             case this.steps.PRACTICE_INFO:
                 return <InfoScreen info={texts.practice_info}
                     continue_label={texts.continue_label}
-                    next={this.nextStep} 
+                    next={this.nextStep}
                     rtl={this.data.language === "hebrew"} />;
             case this.steps.PRACTICE_TRIALS:
-                return <ExperimentBlock 
+                return <ExperimentBlock
                     next={this.nextStep}
                     data={this.data}
                     is_playing={is_playing}

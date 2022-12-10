@@ -9,15 +9,9 @@ import { LoginScreen } from './login.js';
 import { SubjectDataScreen } from './subject_data.js';
 import { PictureSamplesScreen } from './picture_samples.js';
 import { Experiment } from './experiment.js';
-import { counterbalance, shuffleArray, randomElement } from './randomize.js';
-import { pilot_blocks } from './stimuli.js';
+import { counterbalance, shuffleArray, randomElement, randomInt } from './randomize.js';
+import { blocks } from './stimuli.js';
 import { FinalQuestionsScreen } from './final_questions.js';
-
-/* TODO
- * - Randomize the semantic fields list !counterbalanced! between participants!
- * - Select the correct set of pictures for the current subject
- */
-
 
 const FinishScreen = ({ done_saving, data_save_error, language }) => {
     return (
@@ -124,18 +118,19 @@ class App extends React.Component {
             });
     }
 
-    // PILOT: We use a partial list of the first experiment trials
-    // load_exp1_recordings = () => {
-    //     return gs.read(this.conn, "FirstExperimentTrials", "B2:G769")
-    //         .then(res => res.json())
-    //         .then(exp1_data => this.exp1_recordings = exp1_data.values);
-    // }
-
+    
     load_exp1_recordings = () => {
-        return gs.read(this.conn, "PilotFirstExperimentTrials", "B2:G769")
+        return gs.read(this.conn, "FirstExperimentTrials", "A2:H10000")
             .then(res => res.json())
             .then(exp1_data => this.exp1_recordings = exp1_data.values);
     }
+
+    // PILOT: We use a partial list of the first experiment trials
+    // load_exp1_recordings = () => {
+    //     return gs.read(this.conn, "PilotFirstExperimentTrials", "B2:G769")
+    //         .then(res => res.json())
+    //         .then(exp1_data => this.exp1_recordings = exp1_data.values);
+    // }
 
     handle_login = () => {
         this.setState({ loading: true });
@@ -257,6 +252,7 @@ class App extends React.Component {
                     this.data.picture_samples_order = 0;
                     this.data.picture_variant = 1;
                     this.data.left_picture = 0;
+                    this.data.blocks_order = 0;
 
                     const exp1_subjects = shuffleArray([0, 1, 2, 3, 4, 5, 6, 7]);
                     this.data.subject_Mu_E = exp1_subjects[0];
@@ -273,20 +269,9 @@ class App extends React.Component {
                     this.data.picture_samples_order = counterbalance(6, prev_picture_samples);
 
                     // Picture variant
-                    if (prev_group_settings.length === 0) {
-                        this.data.picture_variant = 1;
-                    }
-                    else {
-                        // PILOT: we always use variant 1
-                        // const prev_group_variants = prev_group_settings.map(r => r[3]);
-                        // let set1_count = 0;
-                        // for (let v of prev_group_variants) {
-                        //     if (v === "1")
-                        //         set1_count += 1;
-                        // }
-                        // const set2_count = prev_group_variants.length - set1_count;
-                        this.data.picture_variant = 1 // set1_count > set2_count ? 2 : 1;
-                    }
+                        
+                    const prev_group_variants = prev_group_settings.map(r => r[3] - 1);
+                    this.data.picture_variant = counterbalance(2, prev_group_variants) + 1;
 
                     // Picture order in a single trial
                     const prev_left_picture = prev_settings.map(r => r[4]);
@@ -294,26 +279,32 @@ class App extends React.Component {
 
                     // Exp1 participant per block
                     if (prev_group_settings.length === 0) {
-                        const exp1_subjects = shuffleArray([0, 1, 2, 3, 4, 5, 6, 7]);
-                        this.data.subject_Mu_E = exp1_subjects[0];
-                        this.data.subject_Mu_H = exp1_subjects[1];
-                        this.data.subject_Sp_E = exp1_subjects[2];
-                        this.data.subject_Sp_H = exp1_subjects[3];
+                        this.data.subject_Mu_E = randomInt(0, 8); // No english speakers in exp1
+                        this.data.subject_Mu_H = randomInt(0, 10);
+                        this.data.subject_Sp_E = randomInt(0, 8);
+                        this.data.subject_Sp_H = randomInt(0, 11);
+
+                        this.data.blocks_order = 0;
                     }
                     else {
                         const prev_subject_Mu_E = prev_group_settings.map(r => r[5]);
                         const prev_subject_Mu_H = prev_group_settings.map(r => r[6]);
                         const prev_subject_Sp_E = prev_group_settings.map(r => r[7]);
                         const prev_subject_Sp_H = prev_group_settings.map(r => r[8]);
+                        const prev_blocks_order = prev_group_settings.map(r => r[9]);
 
                         this.data.subject_Mu_E = counterbalance(8, prev_subject_Mu_E);
-                        this.data.subject_Mu_H = counterbalance(8, prev_subject_Mu_H);
+                        
+                        this.data.subject_Mu_H = counterbalance(10, prev_subject_Mu_H, [5]); // exclude Mu_H_5 since only did half
+
                         this.data.subject_Sp_E = counterbalance(8, prev_subject_Sp_E);
-                        this.data.subject_Sp_H = counterbalance(8, prev_subject_Sp_H);
+                        this.data.subject_Sp_H = counterbalance(11, prev_subject_Sp_H);
+                        this.data.blocks_order = counterbalance(2, prev_blocks_order);
                     }
                 }
-                // NOTE: Use blocks(this.data) for the full experiment
-                this.data.blocks = pilot_blocks(this.data);
+
+                this.data.blocks = blocks(this.data);
+                console.log('blocks', this.data.blocks);
 
                 const subject_row = Object.assign({}, this.data);
                 subject_row.blocks = JSON.stringify(subject_row.blocks);
@@ -344,7 +335,8 @@ class App extends React.Component {
                         this.data.subject_Mu_H = settings_row[6];
                         this.data.subject_Sp_E = settings_row[7];
                         this.data.subject_Sp_H = settings_row[8];
-                        this.data.blocks = JSON.parse(settings_row[9]);
+                        this.data.blocks_order = settings_row[9];
+                        this.data.blocks = blocks(this.data)
                     }
                 }
             });

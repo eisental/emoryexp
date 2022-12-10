@@ -85,185 +85,181 @@ const visual_stim_dir = "stimuli/images/";
 export const visual_stim_size = [480, 270];
 
 export const audio_stimulus_url = (medium,
-                                   language,
-                                   participant,
-                                   unit_size,
-                                   novel_word,
-                                   picture_variant,
-                                   picture_orientation,
-                                   meaning) =>
-{
-    return audio_stim_dir + Medium[medium] + "_" +
-        Language[language] + "_" +
+    language,
+    participant,
+    unit_size,
+    novel_word,
+    picture_variant,
+    picture_orientation,
+    meaning) => {
+    
+    return audio_stim_dir + medium + "_" +
+        language + "_" +
         participant + "_" +
-        UnitSize[unit_size] + "_" +
-        NovelWord[novel_word] + "_" +
+        unit_size + "_" +
+        novel_word + "_" +
         picture_variant + "_" +
-        PictureOrientation[picture_orientation] + "_" +
-        Meaning[meaning] +
+        picture_orientation + "_" +
+        meaning +
         audio_ext;
 };
 
 export const visual_stimulus_url = (meaning,
-                                    picture_variant,
-                                    picture_orientation) =>
-{
+    picture_variant,
+    picture_orientation) => {
     return visual_stim_dir + MeaningName[Meaning[meaning]] +
         picture_variant +
-        PictureOrientation[picture_orientation] +
+        picture_orientation +
         image_ext;
 };
 
 export const block_name = (m, l, u) => {
     if (m === 'Music') {
-	if (l === 'English') {
-	    if (u === 'Single') return 'A';	  
-	    else return 'B';
-	}
-	else {
-	    if (u === 'Single') return 'C';
-	    else return 'D';
-	}
+        if (l === 'English') {
+            if (u === 'Single') return 'A';
+            else return 'B';
+        }
+        else {
+            if (u === 'Single') return 'C';
+            else return 'D';
+        }
     } else {
-	if (l === 'English') {
-	    if (u === 'Single') return 'E';
-	    else return 'F';
-	}
-	else {
-	    if (u === 'Single') return 'G';
-	    else return 'H';
-	}
+        if (l === 'English') {
+            if (u === 'Single') return 'E';
+            else return 'F';
+        }
+        else {
+            if (u === 'Single') return 'G';
+            else return 'H';
+        }
     }
 };
+
+export const blocks_orders = [
+    [ // 1st ordering
+        { medium: 'Music', language: 'Hebrew', unit: 'Single' },
+        { medium: 'Music', language: 'Hebrew', unit: 'Multiple' },
+        { medium: 'Speech', language: 'Hebrew', unit: 'Single' },
+        { medium: 'Speech', language: 'Hebrew', unit: 'Multiple' },
+    ],
+
+    [ // 2nd ordering
+        { medium: 'Speech', language: 'Hebrew', unit: 'Single' },
+        { medium: 'Speech', language: 'Hebrew', unit: 'Multiple' },
+        { medium: 'Music', language: 'Hebrew', unit: 'Single' },
+        { medium: 'Music', language: 'Hebrew', unit: 'Multiple' },
+    ]
+];
 
 export const blocks = (data) => {
     let blocks = [];
-    for (let medium in Medium)
-        for (let lang in Language) {
-            const participant = data[`subject_${Medium[medium]}_${Language[lang]}`];
+    blocks_orders[data.blocks_order].forEach((block) => {
+        const participant = data[`subject_${Medium[block.medium]}_${Language[block.language]}`];
 
-            for (let unit in UnitSize) {
-                blocks.push({
-                    medium: medium,
-                    language: lang,
-                    unit_size: unit,
-		            participant: participant,
-		            name: block_name(medium, lang, unit),
-                });
-            }
-        }
-    return shuffleArray(blocks);
+        blocks.push({
+            ...block,
+            participant,
+        })
+    })
+    return blocks;
 };
 
-export const pilot_blocks = (data) => {
-    let blocks = [];
-    for (let unit in UnitSize) {
-        blocks.push({
-            medium: 'Music',
-            language: 'Hebrew',
-            unit_size: unit,
-            participant: 2,
-            name: block_name('Music', 'Hebrew', unit),
-        });
-    }
+// export const pilot_blocks = (data) => {
+//     let blocks = [];
+//     for (let unit in UnitSize) {
+//         blocks.push({
+//             medium: 'Music',
+//             language: 'Hebrew',
+//             unit_size: unit,
+//             participant: 2,
+//             name: block_name('Music', 'Hebrew', unit),
+//         });
+//     }
 
-    for (let unit in UnitSize) {
-        blocks.push({
-            medium: 'Speech',
-            language: 'Hebrew',
-            unit_size: unit,
-            participant: 0,
-            name: block_name('Speech', 'Hebrew', unit),
-        });
-    }
+//     for (let unit in UnitSize) {
+//         blocks.push({
+//             medium: 'Speech',
+//             language: 'Hebrew',
+//             unit_size: unit,
+//             participant: 0,
+//             name: block_name('Speech', 'Hebrew', unit),
+//         });
+//     }
 
-    return shuffleArray(blocks);
-};
+//     return shuffleArray(blocks);
+// };
 
-export const exp1_picture_orientation = (exp1_recordings, unit_size, word, meaning, picture_variant, participant) => {
+export const exp1_picture_params = (exp1_recordings, block, word, meaning, picture_variant) => {
     const filtered_recs = exp1_recordings.filter(r =>
-        r[0] === unit_size && r[2] === word && r[3] === meaning + picture_variant && parseInt(r[5]) === participant);
+        r[0] === Medium[block.medium] && r[1] === Language[block.language] && parseInt(r[2]) === block.participant && r[3] === UnitSize[block.unit] &&
+        r[4] === NovelWord[word] && parseInt(r[5]) === picture_variant && parseInt(r[7]) === Meaning[meaning]);
 
-    if (filtered_recs.length === 0) 
-        return [Array(4).fill(undefined)];    
+    console.log(filtered_recs.length);
+    if (filtered_recs.length === 0)
+        return undefined;
     else
-        return filtered_recs[0][4];
+        return { variant: filtered_recs[0][5], orientation: filtered_recs[0][6] };
 };
 
-export const block_stimuli = (block, picture_variant, exp1_recordings) => {
+export const block_stimuli = (block, exp1_recordings, picture_variant) => {
     const stims = [];
-    
+
     for (let meaning in Meaning)
         for (let pairing of [0, 1])
             for (let word in NovelWord) {
-                const picture_orientation = exp1_picture_orientation(exp1_recordings,
-                                                                     block.unit_size,
-                                                                     word,
-                                                                     meaning,
-                                                                     picture_variant,
-                                                                     block.participant);
+                let picture_params = exp1_picture_params(exp1_recordings,
+                    block,
+                    word,
+                    meaning,
+                    picture_variant);
+                if (picture_params === undefined) {
+                    console.log('WARNING: cant find picture orientation for:', block, word, meaning, picture_variant);
+                    // Mu_H_7_Ml_T_1_*_1.mp3 is missing...
+                    picture_params = exp1_picture_params(exp1_recordings, block, word, meaning, picture_variant === 1 ? 2 : 1);
+                    if (picture_params === undefined) {
+                        console.log('ERROR: Trying second picture variant, but cant find picture orientation for:', block, word, meaning, picture_variant);
+                        continue
+                    }
+                }
+
+                const { variant, orientation } = picture_params
                 const s = {
                     audio: audio_stimulus_url(
-                        block.medium,
-                        block.language,
-                        block.participant + 1,
-                        block.unit_size,
-                        word,
-                        picture_variant,
-                        picture_orientation,
-                        meaning,
+                        Medium[block.medium],
+                        Language[block.language],
+                        block.participant,
+                        UnitSize[block.unit],
+                        NovelWord[word],
+                        variant,
+                        orientation,
+                        Meaning[meaning],
                     ),
                     pictures: [
                         visual_stimulus_url(meaning,
-                                            picture_variant,
-                                            picture_orientation),
-                        visual_stimulus_url(audio_visual_pairings[meaning][pairing], 
-                                            picture_variant,
-                                            picture_orientation),
+                            variant,
+                            orientation),
+                        visual_stimulus_url(audio_visual_pairings[meaning][pairing],
+                            variant,
+                            orientation),
                     ],
                 };
-		
+
                 Object.assign(s, {
-                    exp1_subject: block.participant + 1,
+                    exp1_subject: block.participant,
                     language: block.language,
                     medium: block.medium,
-                    unit_size: block.unit_size,
+                    unit_size: block.unit,
                     non_word: word,
-                    picture_set: picture_variant,
-                    picture_orientation: picture_orientation,
+                    picture_set: variant,
+                    picture_orientation: orientation,
                     semantic_field: semantic_field_for_meaning(meaning),
                     correct_meaning: meaning,
                     compared_meaning: audio_visual_pairings[meaning][pairing],
                 });
-                console.log(meaning);
+
                 stims.push(s);
             }
-    
+
     return shuffleArray(stims);
-    
-};
 
-
-export const all_audio_urls = (exp1_recs) => {
-    const urls = [];
-
-    for (let m in Medium) {
-        for (let l in Language) {
-            for (let p = 1; p<=8; p++) {
-                for (let u in UnitSize) {
-                    for (let w in NovelWord) {
-                        for (let v = 1; v <= 2; v++) {
-                            for (let mn in Meaning) {
-                                const o = exp1_picture_orientation(exp1_recs, u, w, mn, v, p-1);
-                                if (o !== undefined)
-                                    urls.push(audio_stimulus_url(m, l, p, u, w, v, o, mn)); 
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return urls;
 };

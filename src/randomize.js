@@ -12,16 +12,31 @@ export function repeatArray(arr, count) {
 export const randomInt = (min, max) => 
   Math.floor(Math.random() * (max - min + 1) + min);
 
-export const randomElement = arr => arr[randomInt(0, arr.length-1)];
+export const randomElement = (arr) => arr[randomInt(0, arr.length-1)];
 
-export const shuffleArray = arr => arr
+export const randomElements = (arr, n) => {
+    const randomSplit = (arr, chosen, i) => {
+        const k = randomInt(0, arr.length-1);
+        chosen.push(arr[k]);
+        if (i === 1) {
+            return;
+        }
+        randomSplit(arr.filter((_, l) => l !== k), chosen, i-1);
+    };
+
+    const chosen = [];
+    randomSplit([...arr], chosen, n);
+    return chosen;
+};
+
+export const shuffleArray = (arr) => arr
   .map(a => [Math.random(), a])
   .sort((a, b) => a[0] - b[0])
   .map(a => a[1]);
 
 export const randomSequence = (items, length) => shuffleArray(repeatArray(items, length));
 
-export const counterbalance = (n, prev_vals) => {
+export const counterbalance = (n, prev_vals, exclude=null) => {
     const counts = Array(n).fill(0);
     for (const v of prev_vals) {
         if (counts[v]) {
@@ -36,13 +51,17 @@ export const counterbalance = (n, prev_vals) => {
     let min_count = null;
     
     for (let i=0; i<n; i++) {
+        if (exclude && exclude.includes(i)) {
+            continue;
+        }
+        
         if (min_count === null || counts[i] < min_count) {
             min_count = counts[i];
             min_idxs = [i];
         }
-	else if (counts[i] === min_count) {
-	    min_idxs.push(i);
-	}
+        else if (counts[i] === min_count) {
+            min_idxs.push(i);
+        }
     }
  
     return randomElement(min_idxs);

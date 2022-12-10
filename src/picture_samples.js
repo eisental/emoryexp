@@ -3,7 +3,7 @@ import { classNames, ContinueButton } from './ui.js';
 import { texts as allTexts } from './text.js';
 import {
   semantic_field_meanings, visual_stimulus_url, SemanticField,
-  MeaningName, visual_stim_size, contrast_meanings, serial_meanings
+  MeaningName, visual_stim_size, contrast_meanings, serial_meanings, PictureOrientation
 } from './stimuli.js';
 import { randomElement, perm_to_seq } from './randomize.js';
 
@@ -41,10 +41,10 @@ export const PictureSamplesScreen = ({ next, semantic_fields_permutation, pictur
 
   if (intro) {
     const contrast_src = visual_stimulus_url(randomElement(contrast_meanings),
-      picture_variant, picture_orientation);
+      picture_variant, PictureOrientation[picture_orientation]);
     const contrast_img = <img src={contrast_src} alt={contrast_src} width={visual_stim_size[0]} height={visual_stim_size[1]} />;
     const serial_src = visual_stimulus_url(randomElement(serial_meanings),
-      picture_variant, picture_orientation);
+      picture_variant, PictureOrientation[picture_orientation]);
     const serial_img = <img src={serial_src} alt={serial_src} width={visual_stim_size[0]} height={visual_stim_size[1]} />;
 
     return (
@@ -77,7 +77,7 @@ export const PictureSamplesScreen = ({ next, semantic_fields_permutation, pictur
 
     console.log(meanings);
     const imgs = meanings
-      .map(m => visual_stimulus_url(m, picture_variant, picture_orientation))
+      .map(m => visual_stimulus_url(m, picture_variant, PictureOrientation[picture_orientation]))
       .map(src => <img src={src} alt={src} key={src}
         width={visual_stim_size[0]}
         height={visual_stim_size[1]} />);
